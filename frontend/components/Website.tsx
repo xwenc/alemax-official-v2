@@ -1,10 +1,16 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { bases, copy, Locale, products } from "@/lib/content";
+import {
+  bases,
+  copy,
+  Locale,
+  products,
+  portfolioCategories,
+} from "@/lib/content";
 import InquiryForm from "./InquiryForm";
 const image = (file: string) => `/images/${file}`;
 const links = [
-  "about",
+  "production-bases",
   "production-bases",
   "products",
   "about",
@@ -18,7 +24,6 @@ export default function Website() {
     [menu, setMenu] = useState(false),
     [search, setSearch] = useState(false),
     [query, setQuery] = useState(""),
-    [filter, setFilter] = useState("all"),
     [selected, setSelected] = useState<string | null>(null),
     [subject, setSubject] = useState("");
   const dialog = useRef<HTMLDialogElement>(null),
@@ -27,7 +32,11 @@ export default function Website() {
   useEffect(() => {
     const lang = new URLSearchParams(window.location.search).get("lang");
     if (lang === "es") setLocale("es");
-    const scroll = () => setCompact(window.scrollY > 80);
+    // Use separate thresholds so small scroll movements cannot toggle the header repeatedly.
+    const scroll = () => {
+      const y = Math.max(0, window.scrollY);
+      setCompact((current) => (current ? y > 40 : y > 80));
+    };
     scroll();
     window.addEventListener("scroll", scroll, { passive: true });
     return () => window.removeEventListener("scroll", scroll);
@@ -203,36 +212,16 @@ export default function Website() {
               <span>↗</span>
             </a>
           </div>
-          <a className="hero-scroll" href="#about" aria-label="Next section">
+          <a
+            className="hero-scroll"
+            href="#production-bases"
+            aria-label="Next section"
+          >
             ↓
           </a>
           <div className="hero-index">
             0{slide + 1}
             <span>/ 02</span>
-          </div>
-        </section>
-        <section
-          id="about"
-          className="about-section photo-panel"
-          style={{ backgroundImage: `url(${image("equipment.jpg")})` }}
-        >
-          <div className="wash" />
-          <div className="about-panel">
-            <p className="eyebrow">ALEMAX GLOBAL INGREDIENTS</p>
-            <h2>{t.aboutTitle}</h2>
-            <p>{t.aboutText}</p>
-            <a className="button" href="#production-bases">
-              {t.aboutCta}
-              <span>↗</span>
-            </a>
-          </div>
-          <div className="about-note">
-            <span>01 /</span>
-            <p>
-              {locale === "en"
-                ? "From production to partnership."
-                : "De la producción a la colaboración."}
-            </p>
           </div>
         </section>
         <section id="production-bases">
@@ -262,25 +251,38 @@ export default function Website() {
             ))}
           </div>
         </section>
-        <section
-          className="brand-section"
-          style={{ backgroundImage: `url(${image("production.jpg")})` }}
-        >
-          <div className="brand-panel">
-            <p className="eyebrow">{t.brandLabel}</p>
-            <h2>{t.brandTitle}</h2>
-            <p>{t.brandText}</p>
-            <div className="brand-links">
-              {bases.slice(0, 4).map((b) => (
-                <button key={b.id} onClick={() => setSelected(b.id)}>
-                  {b[locale]}
-                  <span>↗</span>
-                </button>
-              ))}
+        <section id="about">
+          <div className="section-heading container">
+            <div>
+              <p className="eyebrow green">{t.brandLabel}</p>
+              <h2>{t.brandTitle}</h2>
             </div>
+            <p>{t.brandText}</p>
           </div>
-          <div className="brand-mark">
-            ALEMAX<span>GLOBAL INGREDIENTS</span>
+          <div
+            className="brand-section"
+            style={{ backgroundImage: `url(${image("production.jpg")})` }}
+          >
+            <div className="brand-panel">
+              <div className="brand-links">
+                {portfolioCategories.map((b) => (
+                  <button
+                    key={b.id}
+                    onClick={() =>
+                      bases.some((base) => base.id === b.id)
+                        ? setSelected(b.id)
+                        : ask(b[locale])
+                    }
+                  >
+                    {b[locale]}
+                    <span>↗</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="brand-mark">
+              ALEMAX<span>GLOBAL INGREDIENTS</span>
+            </div>
           </div>
         </section>
         <section id="products" className="products-section">
@@ -303,49 +305,27 @@ export default function Website() {
                 {t.all} ↗
               </a>
             </div>
-            <div
-              className="product-filters"
-              role="group"
-              aria-label="Product categories"
-            >
-              {["all", "potassium", "hydrocolloids"].map((f) => (
-                <button
-                  aria-pressed={filter === f}
-                  className={filter === f ? "selected" : ""}
-                  key={f}
-                  onClick={() => setFilter(f)}
-                >
-                  {f === "all"
-                    ? t.filter
-                    : bases.find((b) => b.id === f)?.[locale]}
-                </button>
-              ))}
-            </div>
             <div className="product-grid">
-              {products
-                .filter((p) => filter === "all" || p.category === filter)
-                .map((p) => (
-                  <article className="product" key={p.id}>
-                    <button
-                      className="product-image"
-                      onClick={() => setSelected(p.id)}
-                      aria-label={`${t.inquire}: ${p.name}`}
-                    >
-                      <img src={image(p.image)} alt={p.name} loading="lazy" />
-                      <span>↗</span>
-                    </button>
-                    <p className="product-code">{p.code}</p>
-                    <h3>
-                      <button onClick={() => setSelected(p.id)}>
-                        {p.name}
-                      </button>
-                    </h3>
-                    <p>{p[locale]}</p>
-                    <button className="text-link" onClick={() => ask(p.name)}>
-                      {t.inquire} ↗
-                    </button>
-                  </article>
-                ))}
+              {products.map((p) => (
+                <article className="product" key={p.id}>
+                  <button
+                    className="product-image"
+                    onClick={() => setSelected(p.id)}
+                    aria-label={`${t.inquire}: ${p.name}`}
+                  >
+                    <img src={image(p.image)} alt={p.name} loading="lazy" />
+                    <span>↗</span>
+                  </button>
+                  <p className="product-code">{p.code}</p>
+                  <h3>
+                    <button onClick={() => setSelected(p.id)}>{p.name}</button>
+                  </h3>
+                  <p>{p[locale]}</p>
+                  <button className="text-link" onClick={() => ask(p.name)}>
+                    {t.inquire} ↗
+                  </button>
+                </article>
+              ))}
             </div>
           </div>
         </section>
@@ -402,7 +382,7 @@ export default function Website() {
           </div>
           <div>
             <h4>{t.business}</h4>
-            <a href="#about">{t.nav[0]}</a>
+            <a href="#production-bases">{t.nav[0]}</a>
             <a href="#production-bases">{t.nav[1]}</a>
             <a href="#products">{t.nav[2]}</a>
           </div>

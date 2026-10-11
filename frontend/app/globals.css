@@ -150,8 +150,10 @@ a:focus-visible {
 }
 .site-header {
   height: 130px;
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 40;
   background: white;
   display: flex;
@@ -436,7 +438,7 @@ nav {
   position: relative;
   background-size: cover;
   background-position: center;
-  min-height: 590px;
+  min-height: 0;
 }
 .brand-panel {
   position: relative;
@@ -444,12 +446,7 @@ nav {
   background: rgba(23, 107, 42, 0.92);
   color: white;
   padding: 60px 55px;
-  min-height: 590px;
-}
-.brand-panel > p:not(.eyebrow) {
-  font-size: 14px;
-  max-width: 430px;
-  margin-block: 24px;
+  min-height: 0;
 }
 .brand-links {
   display: grid;
@@ -489,23 +486,6 @@ nav {
 .products-section {
   background: var(--mist);
   padding-bottom: 70px;
-}
-.product-filters {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 30px;
-  flex-wrap: wrap;
-}
-.product-filters button {
-  border: 1px solid #176b2a33;
-  padding: 9px 15px;
-  font-size: 12px;
-  color: var(--forest);
-}
-.product-filters .selected {
-  background: var(--forest);
-  color: white;
-  border-color: var(--forest);
 }
 .product-grid {
   display: grid;
@@ -1059,7 +1039,7 @@ dialog::backdrop {
     left: 24px;
   }
   .brand-section {
-    padding-top: 180px;
+    padding-top: 0;
   }
   .brand-panel {
     width: 100%;
@@ -1190,69 +1170,17 @@ dialog::backdrop {
   }
 }
 
-/* Company introduction photo panel. */
-.photo-panel {
-  position: relative;
-  background-size: cover;
-  background-position: center;
-  min-height: 570px;
-}
-.wash {
-  position: absolute;
-  inset: 0;
-  background: #ffffffbc;
-}
-.about-panel {
-  position: relative;
-  background: rgba(23, 107, 42, 0.93);
-  color: white;
-  width: 50%;
-  margin-left: 50%;
-  padding: 64px 55px;
-}
-.about-panel > p:not(.eyebrow) {
-  margin: 25px 0 28px;
-  font-size: 15px;
-  color: #ffffffde;
-}
-.about-note {
-  position: absolute;
-  bottom: 35px;
-  left: 56px;
-  display: flex;
-  gap: 20px;
-  max-width: 320px;
-  align-items: baseline;
-}
-.about-note > span {
-  color: var(--forest);
-  font-size: 13px;
-  font-weight: 700;
-}
-.about-note > p {
-  font-size: 23px;
-  font-weight: 700;
-  line-height: 1.3;
+/* Reserve a stable header footprint: shrinking must not change scroll position. */
+#main {
+  padding-top: 130px;
 }
 @media (max-width: 1100px) {
-  .about-panel {
-    padding: 45px 35px;
+  #main {
+    padding-top: 100px;
   }
 }
 @media (max-width: 767px) {
-  .about-section {
-    min-height: 600px;
-    padding-top: 160px;
-  }
-  .about-panel {
-    width: 100%;
-    margin-left: 0;
-    padding: 38px 24px;
-  }
-  .about-note {
-    display: none;
-  }
-  .about-panel > p:not(.eyebrow) {
-    font-size: 14px;
+  #main {
+    padding-top: 80px;
   }
 }

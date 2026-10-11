@@ -43,6 +43,32 @@ export const bases = [
     desc: "DATEM · PGPR · GMS",
   },
 ];
+export const portfolioCategories = [
+  { id: "acidity", en: "Acidity Regulators", es: "Reguladores de acidez" },
+  {
+    id: "anticaking",
+    en: "Anti-caking Agents",
+    es: "Agentes antiaglomerantes",
+  },
+  { id: "emulsifiers", en: "Emulsification", es: "Emulsificación" },
+  {
+    id: "fermentation",
+    en: "Fermentation & Enzymes",
+    es: "Fermentación y enzimas",
+  },
+  { id: "hydrocolloids", en: "Hydrocolloids", es: "Hidrocoloides" },
+  {
+    id: "moisture",
+    en: "Moisture Retention Agents",
+    es: "Agentes de retención de humedad",
+  },
+  { id: "phosphates", en: "Phosphate Series", es: "Serie de fosfatos" },
+  { id: "preservatives", en: "Preservatives", es: "Conservantes" },
+  { id: "silica", en: "Silicon Series", es: "Serie de silicio" },
+  { id: "starch", en: "Starch Series", es: "Serie de almidones" },
+  { id: "sweeteners", en: "Sweeteners", es: "Edulcorantes" },
+  { id: "other", en: "Other Chemicals", es: "Otros químicos" },
+];
 export const products = [
   {
     id: "carrageenan",
