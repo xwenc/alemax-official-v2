@@ -70,3 +70,9 @@ Backend tests use an isolated temporary SQLite database; Docker integration veri
 ## Content
 
 Edit `frontend/lib/content.ts` for bilingual text, products and categories. Replace images under `frontend/public/images`. The homepage updates section contains company/resource links rather than fabricated dated news. Product and production dialogs request technical documentation via the inquiry form. Existing Alemax links provide the complete catalog and legal information. The brand panel presents ingredient categories until separate brand names are provided.
+
+## 旧官网内容迁移
+
+2026-10-11 从 https://www.alemaxglobal.com 的英文、西班牙文公开页面提取内容，保存在 `frontend/lib/legacy-content.json`。每种语言包含 6 个生产基地、12 个分类、64 个产品，以及联系、动态、法律声明、隐私政策和 Cookie 政策。生产基地正文及法律文案来自原站，不补写未提供的产品规格或价格。动态页原站无文章内容，因此显示空状态。
+
+访问 `/en`、`/es`，子页面使用原站路径（例如 `/es/products?cat=hydrocolloids`），新增 `/es/production-bases` 及 `/es/products/[slug]`。产品详情展示原站提供的名称、代码、分类及生产基地关系，并链接询价表单。共享首页页头和页脚，页头收缩保持稳定页面占位。生产基地图库沿用旧站公开图片 URL。更新旧站资料后重新同步该 JSON；正式上线前复核法律文案、联系方式及图片使用权。

@@ -285,15 +285,7 @@ export default function InquiryForm({
             />
             <span>
               {t.privacy}{" "}
-              <a
-                href={
-                  locale === "es"
-                    ? "https://www.alemaxglobal.com/es/privacy"
-                    : "/privacy"
-                }
-                target="_blank"
-                rel="noreferrer"
-              >
+              <a href={`/${locale}/privacy`} target="_blank" rel="noreferrer">
                 {t.policy}
               </a>
               . *

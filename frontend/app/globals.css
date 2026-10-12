@@ -214,7 +214,10 @@ nav {
   color: var(--forest);
 }
 .chevron {
-  font-size: 16px;
+  display: block;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 .submenu {
   position: absolute;
@@ -1182,5 +1185,214 @@ dialog::backdrop {
 @media (max-width: 767px) {
   #main {
     padding-top: 80px;
+  }
+}
+/* Interior pages share the homepage typography, spacing and rectangular panels. */
+.inner-heading {
+  padding-block: 48px 56px;
+}
+.inner-heading h1 {
+  max-width: 1000px;
+}
+.inner-heading > p:last-child {
+  max-width: 720px;
+  margin-top: 24px;
+  color: #757575;
+}
+.breadcrumbs {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #757575;
+  margin-bottom: 36px;
+  flex-wrap: wrap;
+}
+.breadcrumbs a {
+  color: var(--forest);
+}
+.catalog-section,
+.legacy-body,
+.origin-grid,
+.contact-page,
+.product-detail {
+  padding-bottom: 72px;
+}
+.catalog-tools {
+  padding: 28px;
+  background: var(--mist);
+  margin-bottom: 32px;
+}
+.catalog-tools label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+}
+.catalog-tools input {
+  display: block;
+  width: 100%;
+  background: white;
+  border: 1px solid #cadfcd;
+  padding: 16px;
+  margin-top: 10px;
+}
+.category-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+.category-links a {
+  font-size: 13px;
+  border-bottom: 1px solid #cadfcd;
+  padding: 8px 0;
+  margin-right: 12px;
+}
+.category-links .active {
+  color: var(--forest);
+  border-color: var(--forest);
+  font-weight: 700;
+}
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.catalog-card {
+  padding: 28px;
+  border: 1px solid #dce8de;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.catalog-card h3 {
+  font-size: 25px;
+  overflow-wrap: anywhere;
+}
+.catalog-card > p:not(.eyebrow) {
+  color: #757575;
+  margin: 14px 0 24px;
+}
+.catalog-card .text-link {
+  margin-top: auto;
+}
+.catalog-card:hover {
+  background: var(--mist);
+  border-color: var(--forest);
+}
+.origin-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.origin-card img {
+  width: 100%;
+  height: 230px;
+  object-fit: cover;
+}
+.origin-card > div {
+  background: var(--mist);
+  padding: 26px;
+}
+.origin-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 48px;
+}
+.origin-gallery img {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+}
+.legacy-prose {
+  max-width: 920px;
+}
+.legacy-prose p {
+  margin-bottom: 22px;
+  color: #555;
+}
+.legacy-prose h2 {
+  margin: 38px 0 22px;
+  font-size: 32px;
+}
+.legal-list-item {
+  border-left: 2px solid var(--forest);
+  padding-left: 18px;
+}
+.contact-page,
+.product-detail {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 60px;
+}
+.contact-details a {
+  display: block;
+  color: var(--forest);
+  margin-top: 18px;
+  overflow-wrap: anywhere;
+}
+.contact-details p {
+  margin-top: 20px;
+}
+.product-detail {
+  grid-template-columns: 2fr 1fr;
+}
+.product-detail dl {
+  margin: 28px 0;
+}
+.product-detail dt {
+  color: #757575;
+  font-size: 13px;
+  margin-top: 18px;
+}
+.product-detail dd {
+  margin: 8px 0;
+  font-weight: 600;
+}
+.product-detail .button {
+  margin-top: 30px;
+}
+.product-detail aside {
+  background: var(--mist);
+  padding: 32px;
+  align-self: start;
+}
+.empty-state {
+  padding-block: 30px 80px;
+  color: #757575;
+}
+.empty-state .button {
+  margin-top: 28px;
+}
+@media (max-width: 1100px) {
+  .catalog-grid,
+  .origin-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .contact-page,
+  .product-detail {
+    gap: 32px;
+  }
+}
+@media (max-width: 767px) {
+  .inner-heading {
+    padding-block: 30px 36px;
+  }
+  .catalog-grid,
+  .origin-grid,
+  .contact-page,
+  .product-detail,
+  .origin-gallery {
+    grid-template-columns: 1fr;
+  }
+  .catalog-tools {
+    padding: 20px;
+  }
+  .origin-gallery {
+    gap: 16px;
+  }
+  .catalog-card {
+    padding: 24px;
   }
 }

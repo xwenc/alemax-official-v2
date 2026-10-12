@@ -107,7 +107,7 @@ export const products = [
     es: "Soluciones de conservación para fabricantes de alimentos y bebidas.",
   },
 ];
-export const copy = {
+const copyEnEs = {
   en: {
     nav: [
       "Our business",
@@ -283,3 +283,5 @@ export const copy = {
     top: "Volver arriba",
   },
 };
+
+export const copy = copyEnEs;

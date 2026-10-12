@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import {
   bases,
   copy,
@@ -8,17 +8,16 @@ import {
   portfolioCategories,
 } from "@/lib/content";
 import InquiryForm from "./InquiryForm";
+import legacy from "@/lib/legacy-content.json";
 const image = (file: string) => `/images/${file}`;
-const links = [
-  "production-bases",
-  "production-bases",
-  "products",
-  "about",
-  "updates",
-  "contact",
-];
-export default function Website() {
-  const [locale, setLocale] = useState<Locale>("en"),
+export default function Website({
+  children,
+  initialLocale = "en",
+}: {
+  children?: ReactNode;
+  initialLocale?: Locale;
+}) {
+  const [locale, setLocale] = useState<Locale>(initialLocale),
     [slide, setSlide] = useState(0),
     [compact, setCompact] = useState(false),
     [menu, setMenu] = useState(false),
@@ -29,9 +28,25 @@ export default function Website() {
   const dialog = useRef<HTMLDialogElement>(null),
     searchDialog = useRef<HTMLDialogElement>(null);
   const t = copy[locale];
+  const catalog = legacy[locale];
+  const home = `/${locale}`;
+  const baseUrl = (id: string) => {
+    const i = bases.findIndex((b) => b.id === id);
+    return `${home}/${catalog.pages.filter((p) => p.path.startsWith("production-base/"))[i]?.path || "production-bases"}`;
+  };
+  const categoryUrl = (id: string) =>
+    `${home}/products?cat=${catalog.categories[portfolioCategories.findIndex((c) => c.id === id)]?.slug || ""}`;
+  const destinations = [
+    `${home}#production-bases`,
+    `${home}/production-bases`,
+    `${home}/products`,
+    `${home}#about`,
+    `${home}/activity`,
+    `${home}/contact`,
+  ];
   useEffect(() => {
     const lang = new URLSearchParams(window.location.search).get("lang");
-    if (lang === "es") setLocale("es");
+    if (lang === "es") setLocale(lang);
     // Use separate thresholds so small scroll movements cannot toggle the header repeatedly.
     const scroll = () => {
       const y = Math.max(0, window.scrollY);
@@ -52,8 +67,21 @@ export default function Website() {
     return () => clearInterval(timer);
   }, []);
   useEffect(() => {
-    if (selected) dialog.current?.showModal();
-    else dialog.current?.close();
+    if (selected) {
+      const b = bases.find((b) => b.id === selected);
+      const aliases: Record<string, string> = {
+        carrageenan: "carrageenan",
+        koh: "potassium-hydroxide",
+        kms: "potassium-metabisulfite",
+        sorbate: "potassium-sorbate",
+      };
+      const product = catalog.products.find((p) =>
+        p.slug.includes(aliases[selected] || selected),
+      );
+      window.location.href = b
+        ? baseUrl(b.id)
+        : `${home}/products/${product?.slug || selected}`;
+    } else dialog.current?.close();
   }, [selected]);
   useEffect(() => {
     if (search) searchDialog.current?.showModal();
@@ -62,8 +90,11 @@ export default function Website() {
   const switchLanguage = (lang: Locale) => {
     setLocale(lang);
     const u = new URL(window.location.href);
-    u.searchParams.set("lang", lang);
-    window.history.replaceState(null, "", u);
+    u.pathname = /^\/(en|es)(\/|$)/.test(u.pathname)
+      ? u.pathname.replace(/^\/(en|es)/, `/${lang}`)
+      : `/${lang}`;
+    u.searchParams.delete("lang");
+    window.location.href = u.pathname + u.search + u.hash;
   };
   const go = (id: string) => {
     setMenu(false);
@@ -78,7 +109,11 @@ export default function Website() {
   const item = products.find((p) => p.id === selected);
   const base = bases.find((p) => p.id === selected);
   const searchItems = [
-    ...products.map((p) => ({ id: p.id, title: p.name, kind: p.code })),
+    ...catalog.products.map((p) => ({
+      id: p.slug,
+      title: p.name,
+      kind: p.code || p.category?.name || "ALEMAX",
+    })),
     ...bases.map((b) => ({ id: b.id, title: b[locale], kind: t.nav[1] })),
   ].filter((p) =>
     `${p.title} ${p.kind}`.toLowerCase().includes(query.toLowerCase()),
@@ -89,7 +124,7 @@ export default function Website() {
         {locale === "en" ? "Skip to content" : "Ir al contenido"}
       </a>
       <header className={`site-header ${compact ? "compact" : ""}`}>
-        <a className="logo" href="#" aria-label="ALEMAX home">
+        <a className="logo" href={home} aria-label="ALEMAX home">
           <img src={image("logo.png")} alt="ALEMAX Global Ingredients" />
         </a>
         <div className="header-right">
@@ -127,10 +162,23 @@ export default function Website() {
           <nav aria-label="Main navigation" className={menu ? "open" : ""}>
             {t.nav.map((label, i) => (
               <div className="nav-item" key={label}>
-                <a href={`#${links[i]}`} onClick={() => setMenu(false)}>
+                <a href={destinations[i]} onClick={() => setMenu(false)}>
                   {label}
                   {i === 1 || i === 2 ? (
-                    <span className="chevron">⌄</span>
+                    <svg
+                      className="chevron"
+                      viewBox="0 0 16 16"
+                      aria-hidden="true"
+                      fill="none"
+                    >
+                      <path
+                        d="m4 6 4 4 4-4"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
                   ) : null}
                 </a>
                 {i === 1 && (
@@ -150,16 +198,10 @@ export default function Website() {
                 )}
                 {i === 2 && (
                   <div className="submenu">
-                    {products.map((p) => (
-                      <button
-                        key={p.id}
-                        onClick={() => {
-                          setSelected(p.id);
-                          setMenu(false);
-                        }}
-                      >
+                    {catalog.categories.map((p) => (
+                      <a key={p.slug} href={`${home}/products?cat=${p.slug}`}>
                         {p.name}
-                      </button>
+                      </a>
                     ))}
                   </div>
                 )}
@@ -179,200 +221,202 @@ export default function Website() {
         </button>
       </header>
       <main id="main">
-        <section
-          className="hero"
-          aria-label={
-            locale === "en" ? "Company introduction" : "Presentación de empresa"
-          }
-        >
-          <div
-            className="hero-picture"
-            style={{
-              backgroundImage: `url(${image(slide === 0 ? "hero.jpg" : "equipment.jpg")})`,
-            }}
-          />
-          <div className="hero-shade" />
-          <div className="hero-pagination" role="group" aria-label="Slides">
-            {[0, 1].map((i) => (
-              <button
-                key={i}
-                className={slide === i ? "current" : ""}
-                onClick={() => setSlide(i)}
-                aria-label={`Slide ${i + 1}`}
-                aria-pressed={slide === i}
+        {children || (
+          <>
+            <section
+              className="hero"
+              aria-label={
+                locale === "en"
+                  ? "Company introduction"
+                  : "Presentación de empresa"
+              }
+            >
+              <div
+                className="hero-picture"
+                style={{
+                  backgroundImage: `url(${image(slide === 0 ? "hero.jpg" : "equipment.jpg")})`,
+                }}
               />
-            ))}
-          </div>
-          <div className="hero-caption">
-            <p className="eyebrow">{t.eyebrow}</p>
-            <h1>{t.hero[slide]}</h1>
-            <p className="hero-description">{t.heroSub}</p>
-            <a className="button" href="#products">
-              {t.explore}
-              <span>↗</span>
-            </a>
-          </div>
-          <a
-            className="hero-scroll"
-            href="#production-bases"
-            aria-label="Next section"
-          >
-            ↓
-          </a>
-          <div className="hero-index">
-            0{slide + 1}
-            <span>/ 02</span>
-          </div>
-        </section>
-        <section id="production-bases">
-          <div className="section-heading container">
-            <div>
-              <p className="eyebrow green">{t.basesLabel}</p>
-              <h2>{t.basesTitle}</h2>
-            </div>
-            <p>{t.basesText}</p>
-          </div>
-          <div className="base-grid">
-            {bases.map((b, i) => (
-              <button
-                className="base-tile"
-                key={b.id}
-                onClick={() => setSelected(b.id)}
-              >
-                <img loading="lazy" src={image(b.image)} alt={b[locale]} />
-                <div className="tile-overlay" />
-                <span className="tile-number">0{i + 1}</span>
-                <span className="tile-label">
-                  {b[locale]}
-                  <span>↗</span>
-                </span>
-                <span className="tile-description">{b.desc}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-        <section id="about">
-          <div className="section-heading container">
-            <div>
-              <p className="eyebrow green">{t.brandLabel}</p>
-              <h2>{t.brandTitle}</h2>
-            </div>
-            <p>{t.brandText}</p>
-          </div>
-          <div
-            className="brand-section"
-            style={{ backgroundImage: `url(${image("production.jpg")})` }}
-          >
-            <div className="brand-panel">
-              <div className="brand-links">
-                {portfolioCategories.map((b) => (
+              <div className="hero-shade" />
+              <div className="hero-pagination" role="group" aria-label="Slides">
+                {[0, 1].map((i) => (
                   <button
+                    key={i}
+                    className={slide === i ? "current" : ""}
+                    onClick={() => setSlide(i)}
+                    aria-label={`Slide ${i + 1}`}
+                    aria-pressed={slide === i}
+                  />
+                ))}
+              </div>
+              <div className="hero-caption">
+                <p className="eyebrow">{t.eyebrow}</p>
+                <h1>{t.hero[slide]}</h1>
+                <p className="hero-description">{t.heroSub}</p>
+                <a className="button" href="#products">
+                  {t.explore}
+                  <span>↗</span>
+                </a>
+              </div>
+              <a
+                className="hero-scroll"
+                href="#production-bases"
+                aria-label="Next section"
+              >
+                ↓
+              </a>
+              <div className="hero-index">
+                0{slide + 1}
+                <span>/ 02</span>
+              </div>
+            </section>
+            <section id="production-bases">
+              <div className="section-heading container">
+                <div>
+                  <p className="eyebrow green">{t.basesLabel}</p>
+                  <h2>{t.basesTitle}</h2>
+                </div>
+                <p>{t.basesText}</p>
+              </div>
+              <div className="base-grid">
+                {bases.map((b, i) => (
+                  <button
+                    className="base-tile"
                     key={b.id}
-                    onClick={() =>
-                      bases.some((base) => base.id === b.id)
-                        ? setSelected(b.id)
-                        : ask(b[locale])
-                    }
+                    onClick={() => setSelected(b.id)}
                   >
-                    {b[locale]}
-                    <span>↗</span>
+                    <img loading="lazy" src={image(b.image)} alt={b[locale]} />
+                    <div className="tile-overlay" />
+                    <span className="tile-number">0{i + 1}</span>
+                    <span className="tile-label">
+                      {b[locale]}
+                      <span>↗</span>
+                    </span>
+                    <span className="tile-description">{b.desc}</span>
                   </button>
                 ))}
               </div>
-            </div>
-            <div className="brand-mark">
-              ALEMAX<span>GLOBAL INGREDIENTS</span>
-            </div>
-          </div>
-        </section>
-        <section id="products" className="products-section">
-          <div className="container">
-            <div className="section-heading">
-              <div>
-                <p className="eyebrow green">{t.productsLabel}</p>
-                <h2>{t.productsTitle}</h2>
+            </section>
+            <section id="about">
+              <div className="section-heading container">
+                <div>
+                  <p className="eyebrow green">{t.brandLabel}</p>
+                  <h2>{t.brandTitle}</h2>
+                </div>
+                <p>{t.brandText}</p>
               </div>
-              <a
-                href={
-                  locale === "es"
-                    ? "https://www.alemaxglobal.com/es/products"
-                    : "https://www.alemaxglobal.com/en/products"
-                }
-                target="_blank"
-                rel="noreferrer"
-                className="text-link"
+              <div
+                className="brand-section"
+                style={{ backgroundImage: `url(${image("production.jpg")})` }}
               >
-                {t.all} ↗
-              </a>
-            </div>
-            <div className="product-grid">
-              {products.map((p) => (
-                <article className="product" key={p.id}>
-                  <button
-                    className="product-image"
-                    onClick={() => setSelected(p.id)}
-                    aria-label={`${t.inquire}: ${p.name}`}
-                  >
-                    <img src={image(p.image)} alt={p.name} loading="lazy" />
-                    <span>↗</span>
-                  </button>
-                  <p className="product-code">{p.code}</p>
-                  <h3>
-                    <button onClick={() => setSelected(p.id)}>{p.name}</button>
-                  </h3>
-                  <p>{p[locale]}</p>
-                  <button className="text-link" onClick={() => ask(p.name)}>
-                    {t.inquire} ↗
-                  </button>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-        <section id="updates" className="updates-section container">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow green">{t.updatesLabel}</p>
-              <h2>{t.updatesTitle}</h2>
-            </div>
-            <p>{t.updatesText}</p>
-          </div>
-          <div className="updates-grid">
-            {["plant.jpg", "hydrocolloids.png", "equipment.jpg"].map(
-              (file, i) => (
-                <a
-                  href={`#${["production-bases", "products", "contact"][i]}`}
-                  className="update"
-                  key={file}
-                >
-                  <div className="update-image">
-                    <img src={image(file)} loading="lazy" alt="" />
+                <div className="brand-panel">
+                  <div className="brand-links">
+                    {portfolioCategories.map((b) => (
+                      <button
+                        key={b.id}
+                        onClick={() => {
+                          window.location.href = categoryUrl(b.id);
+                        }}
+                      >
+                        {b[locale]}
+                        <span>↗</span>
+                      </button>
+                    ))}
                   </div>
-                  <p className="eyebrow green">
-                    {["ALEMAX", t.nav[2], t.nav[5]][i]}
-                  </p>
-                  <h3>
-                    {t.cards[i]}
-                    <span>↗</span>
-                  </h3>
-                  <p>{t.cardDescs[i]}</p>
-                </a>
-              ),
-            )}
-          </div>
-        </section>
-        <section id="contact" className="contact-section">
-          <div className="container">
-            <div className="section-heading">
-              <div>
-                <p className="eyebrow">{t.contactLabel}</p>
-                <h2>{t.contactTitle}</h2>
+                </div>
+                <div className="brand-mark">
+                  ALEMAX<span>GLOBAL INGREDIENTS</span>
+                </div>
               </div>
-              <p>{t.contactText}</p>
-            </div>
-            <InquiryForm locale={locale} subject={subject} />
-          </div>
-        </section>
+            </section>
+            <section id="products" className="products-section">
+              <div className="container">
+                <div className="section-heading">
+                  <div>
+                    <p className="eyebrow green">{t.productsLabel}</p>
+                    <h2>{t.productsTitle}</h2>
+                  </div>
+                  <a
+                    href={`${home}/products`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-link"
+                  >
+                    {t.all} ↗
+                  </a>
+                </div>
+                <div className="product-grid">
+                  {products.map((p) => (
+                    <article className="product" key={p.id}>
+                      <button
+                        className="product-image"
+                        onClick={() => setSelected(p.id)}
+                        aria-label={`${t.inquire}: ${p.name}`}
+                      >
+                        <img src={image(p.image)} alt={p.name} loading="lazy" />
+                        <span>↗</span>
+                      </button>
+                      <p className="product-code">{p.code}</p>
+                      <h3>
+                        <button onClick={() => setSelected(p.id)}>
+                          {p.name}
+                        </button>
+                      </h3>
+                      <p>{p[locale]}</p>
+                      <button className="text-link" onClick={() => ask(p.name)}>
+                        {t.inquire} ↗
+                      </button>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </section>
+            <section id="updates" className="updates-section container">
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow green">{t.updatesLabel}</p>
+                  <h2>{t.updatesTitle}</h2>
+                </div>
+                <p>{t.updatesText}</p>
+              </div>
+              <div className="updates-grid">
+                {["plant.jpg", "hydrocolloids.png", "equipment.jpg"].map(
+                  (file, i) => (
+                    <a
+                      href={`${home}/${["production-bases", "products", "contact"][i]}`}
+                      className="update"
+                      key={file}
+                    >
+                      <div className="update-image">
+                        <img src={image(file)} loading="lazy" alt="" />
+                      </div>
+                      <p className="eyebrow green">
+                        {["ALEMAX", t.nav[2], t.nav[5]][i]}
+                      </p>
+                      <h3>
+                        {t.cards[i]}
+                        <span>↗</span>
+                      </h3>
+                      <p>{t.cardDescs[i]}</p>
+                    </a>
+                  ),
+                )}
+              </div>
+            </section>
+            <section id="contact" className="contact-section">
+              <div className="container">
+                <div className="section-heading">
+                  <div>
+                    <p className="eyebrow">{t.contactLabel}</p>
+                    <h2>{t.contactTitle}</h2>
+                  </div>
+                  <p>{t.contactText}</p>
+                </div>
+                <InquiryForm locale={locale} subject={subject} />
+              </div>
+            </section>
+          </>
+        )}{" "}
       </main>
       <footer>
         <div className="container footer-grid">
@@ -382,19 +426,18 @@ export default function Website() {
           </div>
           <div>
             <h4>{t.business}</h4>
-            <a href="#production-bases">{t.nav[0]}</a>
-            <a href="#production-bases">{t.nav[1]}</a>
-            <a href="#products">{t.nav[2]}</a>
+            <a href={`${home}/production-bases`}>{t.nav[0]}</a>
+            <a href={`${home}/production-bases`}>{t.nav[1]}</a>
+            <a href={`${home}/products`}>{t.nav[2]}</a>
           </div>
           <div>
             <h4>{t.resources}</h4>
-            <a href="#updates">{t.nav[4]}</a>
-            <a href="/privacy">{t.policy}</a>
-            <a
-              href="https://www.alemaxglobal.com/es/terms"
-              target="_blank"
-              rel="noreferrer"
-            >
+            <a href={`${home}/activity`}>{t.nav[4]}</a>
+            <a href={`${home}/privacy`}>{t.policy}</a>
+            <a href={`${home}/cookie`}>
+              {locale === "en" ? "Cookie policy" : "Política de cookies"}
+            </a>
+            <a href={`${home}/terms`} target="_blank" rel="noreferrer">
               {locale === "en" ? "Legal notice" : "Aviso legal"}
             </a>
           </div>

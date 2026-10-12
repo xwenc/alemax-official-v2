@@ -51,3 +51,7 @@ def test_rate_limit():
         for _ in range(5):
             assert client.post('/api/inquiries',json=payload,headers=headers).status_code == 201
         assert client.post('/api/inquiries',json=payload,headers=headers).status_code == 429
+
+def test_unsupported_locale_is_rejected():
+    with TestClient(app) as client:
+        assert client.post('/api/inquiries', json={**payload, 'locale': 'xx'}, headers=headers).status_code == 422
