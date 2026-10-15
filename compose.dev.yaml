@@ -1,0 +1,22 @@
+services:
+  api:
+    environment:
+      ENVIRONMENT: development
+    command: [uvicorn, app.main:app, --host, 0.0.0.0, --port, '8000', --reload]
+    volumes:
+      - ./backend/app:/app/app:ro
+  web:
+    build:
+      context: ./frontend
+      target: development
+    environment:
+      NODE_ENV: development
+      ENVIRONMENT: development
+      SITE_ORIGINS: http://localhost:${WEB_PORT:-3000},http://127.0.0.1:${WEB_PORT:-3000}
+    volumes:
+      - ./frontend:/app
+      - dev_node_modules:/app/node_modules
+      - dev_next:/app/.next
+volumes:
+  dev_node_modules:
+  dev_next:

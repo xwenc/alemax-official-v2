@@ -1188,6 +1188,40 @@ dialog::backdrop {
   }
 }
 /* Interior pages share the homepage typography, spacing and rectangular panels. */
+.about-page {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(32px, 5vw, 80px);
+  padding-bottom: 80px;
+  align-items: start;
+}
+.about-page-image {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+}
+.about-page-copy > p:not(.eyebrow) {
+  color: #757575;
+  margin-block: 24px;
+  line-height: 1.8;
+}
+.about-page-copy h3 {
+  margin-top: 36px;
+}
+.about-page-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+@media (max-width: 760px) {
+  .about-page {
+    grid-template-columns: 1fr;
+  }
+  .about-page-image {
+    aspect-ratio: 4 / 3;
+  }
+}
 .inner-heading {
   padding-block: 48px 56px;
 }
@@ -1395,4 +1429,12 @@ dialog::backdrop {
   .catalog-card {
     padding: 24px;
   }
+}
+/* Inquiry feedback also stays readable on the white contact page. */
+.contact-page .form-status.error,
+.contact-page .field-error {
+  color: #b42318;
+}
+.contact-page .verification small {
+  color: #757575;
 }

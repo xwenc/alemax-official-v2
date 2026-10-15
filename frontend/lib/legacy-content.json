@@ -1940,10 +1940,6 @@
           {
             "tag": "h3",
             "text": "Tricalcium Phosphate(TCP)(E341iii)"
-          },
-          {
-            "tag": "h2",
-            "text": "Products"
           }
         ],
         "images": [
@@ -1965,10 +1961,6 @@
         "path": "production-base/factory-modified-starches-sweetener-trehalose-erythritol",
         "title": "Modified Starches",
         "blocks": [
-          {
-            "tag": "h2",
-            "text": "Modified Starches"
-          },
           {
             "tag": "p",
             "text": "Processing 1.35 million metric tons of corn annually, our manufacturing base focuses on starch deep processing using non-GMO corn, potato, and tapioca as core raw materials. Our integrated chain ranges from native corn starch and co-products to modified starches and bio-fermented ingredients, featuring dedicated annual capacities:"
@@ -2060,10 +2052,6 @@
           {
             "tag": "h3",
             "text": "Trehalose(E980)"
-          },
-          {
-            "tag": "h2",
-            "text": "Products"
           }
         ],
         "images": [

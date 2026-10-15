@@ -40,7 +40,7 @@ export default function Website({
     `${home}#production-bases`,
     `${home}/production-bases`,
     `${home}/products`,
-    `${home}#about`,
+    `${home}/about`,
     `${home}/activity`,
     `${home}/contact`,
   ];
@@ -125,7 +125,7 @@ export default function Website({
       </a>
       <header className={`site-header ${compact ? "compact" : ""}`}>
         <a className="logo" href={home} aria-label="ALEMAX home">
-          <img src={image("logo.png")} alt="ALEMAX Global Ingredients" />
+          <img src={image("logo.svg")} alt="ALEMAX Global Ingredients" />
         </a>
         <div className="header-right">
           <div className="header-tools">
@@ -421,7 +421,7 @@ export default function Website({
       <footer>
         <div className="container footer-grid">
           <div className="footer-brand">
-            <img src={image("logo.png")} alt="ALEMAX Global Ingredients" />
+            <img src={image("logo.svg")} alt="ALEMAX Global Ingredients" />
             <p>{t.footer}</p>
           </div>
           <div>
@@ -432,6 +432,7 @@ export default function Website({
           </div>
           <div>
             <h4>{t.resources}</h4>
+            <a href={`${home}/about`}>{t.nav[3]}</a>
             <a href={`${home}/activity`}>{t.nav[4]}</a>
             <a href={`${home}/privacy`}>{t.policy}</a>
             <a href={`${home}/cookie`}>

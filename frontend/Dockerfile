@@ -1,8 +1,13 @@
-FROM node:22-alpine AS build
+FROM node:22-alpine AS development
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
+ENV NODE_ENV=development
+EXPOSE 3000
+CMD ["npm", "run", "dev"]
+
+FROM development AS build
 RUN npm run build
 FROM node:22-alpine AS runtime
 WORKDIR /app

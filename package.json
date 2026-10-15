@@ -1,0 +1,8 @@
+{
+  "name": "alemax-development",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:docker": "docker compose -f compose.yaml -f compose.dev.yaml up --build"
+  }
+}

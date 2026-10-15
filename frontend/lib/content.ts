@@ -173,7 +173,7 @@ const copyEnEs = {
     policy: "Privacy policy",
     send: "Send inquiry",
     sending: "Sending…",
-    success: "Your inquiry has been received. We will be in touch.",
+    success: "Your inquiry has been sent to our team. We will be in touch.",
     error: "Unable to send your inquiry. Please try again.",
     required: "This field is required.",
     emailError: "Enter a valid email address.",
@@ -260,7 +260,8 @@ const copyEnEs = {
     policy: "Política de privacidad",
     send: "Enviar consulta",
     sending: "Enviando…",
-    success: "Hemos recibido su consulta. Nos pondremos en contacto con usted.",
+    success:
+      "Hemos enviado su consulta a nuestro equipo. Nos pondremos en contacto con usted.",
     error: "No se pudo enviar su consulta. Inténtelo de nuevo.",
     required: "Este campo es obligatorio.",
     emailError: "Introduzca un correo electrónico válido.",

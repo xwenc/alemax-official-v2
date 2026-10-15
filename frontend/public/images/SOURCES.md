@@ -20,3 +20,5 @@ Photography / product images: https://cdn.sanity.io/images/rkup842d/production/
 - potassium hydroxide: e375e45e86d88f8305994f75c78c59a29fbad6b5-1279x1706.jpg
 - potassium metabisulfite: 0ff9a745bb736f3bba8ae20259374505f4491693-3072x4096.jpg
 - potassium sorbate: 4a5aced241ac50dc56aef9206363d2bd85a27fd2-507x414.jpg
+
+- `logo.svg`: 用户提供的 ALEMAX_gradient_horizontal.svg，2026-10-13 更新，用于页头、页脚和网站图标。

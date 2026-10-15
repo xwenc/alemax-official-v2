@@ -39,6 +39,15 @@ services:
       API_INTERNAL_URL: http://api:8000
       INTERNAL_API_KEY: ${INTERNAL_API_KEY}
       CAPTCHA_SITE_KEY: ${CAPTCHA_SITE_KEY:-}
+      CAPTCHA_SECRET_KEY: ${CAPTCHA_SECRET_KEY:-}
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      SITE_ORIGINS: ${SITE_ORIGINS:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      INQUIRY_TO: ${INQUIRY_TO:-info@alemaxglobal.com}
     depends_on:
       api:
         condition: service_healthy

@@ -1,6 +1,7 @@
 "use client";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { copy, Locale } from "@/lib/content";
+import { sendInquiry } from "@/app/actions/inquiries";
 type Turnstile = {
   render: (element: HTMLElement, options: Record<string, unknown>) => string;
   reset: (id: string) => void;
@@ -110,17 +111,13 @@ export default function InquiryForm({
     }
     setStatus("sending");
     try {
-      const r = await fetch("/api/inquiries", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...values,
-          privacy,
-          locale,
-          captcha_token: token,
-        }),
+      const result = await sendInquiry({
+        ...values,
+        privacy,
+        locale,
+        captcha_token: token,
       });
-      if (!r.ok) throw new Error();
+      if (!result.ok) throw new Error();
       setStatus("success");
     } catch {
       setStatus("error");
