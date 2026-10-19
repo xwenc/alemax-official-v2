@@ -165,3 +165,7 @@ There are currently no analytics, advertising or personalisation scripts in the 
 Before adding optional services, add purpose-specific settings, enforce consent checks before loading each service, implement shutdown/cookie cleanup on withdrawal, and update the banner version and CMS privacy/cookie policies with the actual vendors, purposes and retention periods. The current choice cookie is a browser preference record, not a server-side consent audit. Review the published CMS policies against the deployed services before launch; the banner alone does not certify legal compliance.
 
 Design references: https://www.aepd.es/guias/guia-cookies.pdf and https://www.edpb.europa.eu/system/files/2023-01/edpb_20230118_report_cookie_banner_taskforce_en.pdf
+
+## AWS EC2 production deployment
+
+See [the EC2 deployment guide](docs/aws-ec2-deployment.md) for the standalone `compose.ec2.yaml`, environment template, host Caddy configuration, deployment/backup scripts and optional GitHub OIDC/SSM workflow. This production stack is separate from the local development configuration.

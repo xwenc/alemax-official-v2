@@ -1,0 +1,15 @@
+# Host-installed Caddy. Add these site blocks alongside existing CRM sites.
+# Change domains and loopback port if your production values differ.
+alemaxglobal.com {
+	redir https://www.alemaxglobal.com{uri} permanent
+}
+www.alemaxglobal.com {
+	encode zstd gzip
+	# All public paths belong to Next.js, including /api/admin and /media.
+	# Never proxy /cms or /api/* directly to FastAPI.
+	reverse_proxy 127.0.0.1:3100
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+}
