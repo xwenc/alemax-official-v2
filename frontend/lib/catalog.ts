@@ -12,7 +12,12 @@ export const getCatalog = cache(
     const data: CmsPublished = await response.json();
     const categories = data.items
       .filter((i) => i.kind === "category")
-      .map((i) => ({ _id: i.id, name: i.fields.title, slug: i.slug }));
+      .map((i) => ({
+        _id: i.id,
+        name: i.fields.title,
+        slug: i.slug,
+        fields: i.fields,
+      }));
     const origins: SiteCategory[] = data.items
       .filter((i) => i.kind === "production-base")
       .map((i) => ({ _id: i.id, name: i.fields.title, slug: i.slug }));

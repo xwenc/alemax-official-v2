@@ -1,6 +1,7 @@
 "use client";
 import type { CmsFields } from "@/lib/cms-types";
 import RichTextEditor from "./RichTextEditor";
+import SeoEditor from "./SeoEditor";
 import { blocksToDocument, documentToBlocks } from "@/lib/rich-text";
 export default function ContentFieldEditor({
   fields,
@@ -43,25 +44,9 @@ export default function ContentFieldEditor({
           onChange({ ...fields, body, blocks: documentToBlocks(body) })
         }
       />
+      <SeoEditor fields={fields} onChange={onChange} />
       <details className="admin-seo">
-        <summary>SEO & accessibility</summary>
-        <label>
-          SEO title
-          <input
-            maxLength={300}
-            value={fields.seo_title}
-            onChange={(e) => set("seo_title", e.target.value)}
-          />
-        </label>
-        <label>
-          SEO description
-          <textarea
-            rows={3}
-            maxLength={1000}
-            value={fields.seo_description}
-            onChange={(e) => set("seo_description", e.target.value)}
-          />
-        </label>
+        <summary>Image accessibility</summary>
         <label>
           Image description
           <input

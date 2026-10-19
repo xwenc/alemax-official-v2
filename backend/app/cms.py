@@ -165,7 +165,7 @@ def create_content(payload: ContentInput):
         identity = f'{payload.kind}:{payload.slug}'
         if db.scalar(select(Content).where(Content.identity == identity)):
             raise HTTPException(409, 'This slug already exists')
-        if payload.kind == 'page' and payload.slug not in ['about','activity','contact','privacy','cookie','terms']:
+        if payload.kind == 'page' and payload.slug not in ['home','products','production-bases','about','activity','contact','privacy','cookie','terms']:
             raise HTTPException(422, 'Use an existing page slug or create an article')
         row = Content(id=str(uuid.uuid4()), kind=payload.kind, slug=payload.slug, identity=identity, shared=payload.shared.model_dump(), version=1, translations={'en': {'fields': payload.fields.model_dump(), 'source_version': 1, 'status': 'draft'}}, published={})
         db.add(row)

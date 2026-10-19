@@ -27,6 +27,13 @@ export default function EnglishContentForm({
   } = editor;
   return (
     <fieldset disabled={busy}>
+      {kind === "page" && (
+        <p className="admin-hint">
+          Page slugs: home, products, production-bases, about, activity,
+          contact, privacy, cookie, terms. For home and listing pages, SEO copy
+          controls search metadata.
+        </p>
+      )}
       <div className="admin-form-row">
         <label>
           Content type

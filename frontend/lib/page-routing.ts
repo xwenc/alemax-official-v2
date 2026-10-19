@@ -18,9 +18,14 @@ export async function pageMetadata(
   const locale = pageLocale(language),
     data = await getCatalog(locale);
   const product = data.products.find((p) => path === `products/${p.slug}`);
-  const page = data.pages.find((p) => p.path === path);
+  const page = data.pages.find((p) => p.path === (path || "home"));
   const article = data.articles?.find((a) => path === `activity/${a.slug}`);
-  const fields = product?.fields || page?.fields || article?.fields;
+  const category =
+    path === "products" && query.cat
+      ? data.categories.find((c) => c.slug === query.cat)
+      : undefined;
+  const fields =
+    category?.fields || product?.fields || page?.fields || article?.fields;
   const title =
     fields?.seo_title ||
     (path === "products"

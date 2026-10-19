@@ -36,6 +36,7 @@ export default function InquiryForm({
     );
   const [siteKey, setSiteKey] = useState<string | null>(null),
     [token, setToken] = useState("");
+  const [engaged, setEngaged] = useState(false);
   const captcha = useRef<HTMLDivElement>(null),
     widget = useRef<string | undefined>(undefined);
   useEffect(() => {
@@ -48,7 +49,7 @@ export default function InquiryForm({
       .catch(() => setSiteKey(null));
   }, []);
   useEffect(() => {
-    if (!siteKey) return;
+    if (!siteKey || !engaged) return;
     let active = true;
     const mount = () => {
       if (active && captcha.current && window.turnstile)
@@ -80,7 +81,7 @@ export default function InquiryForm({
       script?.removeEventListener("load", mount);
       if (widget.current) window.turnstile?.remove(widget.current);
     };
-  }, [siteKey]);
+  }, [siteKey, engaged]);
   const validate = (key: string, value: string) =>
     !value.trim()
       ? t.required
@@ -172,7 +173,12 @@ export default function InquiryForm({
     </div>
   );
   return (
-    <form onSubmit={submit} noValidate className="inquiry-form">
+    <form
+      onFocusCapture={() => setEngaged(true)}
+      onSubmit={submit}
+      noValidate
+      className="inquiry-form"
+    >
       <div className="form-columns">
         <div className="field-stack">
           <div>

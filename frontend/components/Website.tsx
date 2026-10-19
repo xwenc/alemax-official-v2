@@ -2,6 +2,7 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { copy, Locale } from "@/lib/content";
 import InquiryForm from "./InquiryForm";
+import CookieConsent from "./CookieConsent";
 import ProductImage from "./ProductImage";
 import type { SiteCatalog } from "@/lib/catalog-types";
 const image = (file: string) => `/images/${file}`;
@@ -118,6 +119,7 @@ export default function Website({
   );
   return (
     <>
+      <CookieConsent locale={locale} />
       <a className="skip-link" href="#main">
         {locale === "en" ? "Skip to content" : "Ir al contenido"}
       </a>
@@ -453,6 +455,15 @@ export default function Website({
             <a href={`${home}/cookie`}>
               {locale === "en" ? "Cookie policy" : "Política de cookies"}
             </a>
+            <button
+              id="footer-cookie-settings"
+              className="footer-cookie-settings"
+              onClick={() =>
+                window.dispatchEvent(new Event("alemax:open-cookie-settings"))
+              }
+            >
+              {locale === "en" ? "Cookie settings" : "Configuración de cookies"}
+            </button>
             <a href={`${home}/terms`} target="_blank" rel="noreferrer">
               {locale === "en" ? "Legal notice" : "Aviso legal"}
             </a>

@@ -984,3 +984,32 @@
 .admin-rich-content em {
   font-style: italic;
 }
+
+.admin-seo > label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 18px;
+}
+.admin-seo small {
+  color: var(--admin-muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+.admin-seo-preview {
+  margin-top: 24px;
+  padding: 18px;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: white;
+  overflow-wrap: anywhere;
+}
+.admin-seo-preview h4 {
+  color: #1a0dab;
+  font-size: 19px;
+  font-weight: 400;
+  margin: 12px 0 6px;
+}
+.admin-seo-preview p {
+  margin: 0;
+}

@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 const name = "alemax_admin";
 export function adminConfigured() {
   return Boolean(
-    (process.env.ADMIN_PASSWORD?.length || 0) >= 12 &&
+    (process.env.ADMIN_PASSWORD?.length || 0) >= 8 &&
     (process.env.ADMIN_SESSION_SECRET?.length || 0) >= 32 &&
     process.env.INTERNAL_API_KEY,
   );

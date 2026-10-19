@@ -151,3 +151,17 @@ Run `npm run dev` locally or `npm run dev:docker` for the MySQL-backed stack. Pr
 ### Rich-text body format
 
 The Body content editor uses Tiptap and stores an optional structured `body` document inside the existing localized fields JSON. No database column migration is required. Existing `blocks` remain readable and convert to the editor automatically; new drafts also include plain blocks for compatibility. `body`, when present, is authoritative for previews and public rendering. English and Spanish use the same editor. Translation visits only text nodes, retaining marks, list structure, headings and link destinations; it does not translate URLs. Public pages render a validated node/mark allowlist as React elements, not executable HTML. The API rejects script nodes, unsafe link schemes, invalid nesting, excessive depth and oversized bodies, and drops unsupported attributes.
+
+### SEO copy
+
+Each content editor includes a visible **SEO copy** section for the English and Spanish editions. SEO title and description are stored in the database JSON fields `translations.<locale>.fields.seo_title` and `seo_description`; saving a draft does not alter the published snapshot. Publish the corresponding edition to update the Next.js metadata. No schema migration is needed because these fields already exist in the content model. Category SEO applies to its filtered `/products?cat=...` page. To manage homepage metadata, create a Page with slug `home`; use `products` and `production-bases` for those listing pages. The counters and search preview are editorial guidance, not guaranteed search engine display limits.
+
+### Cookie choice banner
+
+Public pages show an English/Spanish privacy banner with equally prominent Accept and Reject buttons, links to the policy pages, and a persistent Cookie settings button to change or withdraw a choice. The necessary first-party cookie `alemax_cookie_choice` stores only the choice, notice version and timestamp for 180 days (Path=/, SameSite=Lax, Secure on HTTPS). Invalid, obsolete and expired values prompt again. No interaction, scrolling or navigation constitutes acceptance. The banner is non-modal so policy pages and the site remain usable without accepting.
+
+There are currently no analytics, advertising or personalisation scripts in the site. Acceptance does not install any. Turnstile, when configured for inquiry security, loads only after interacting with the inquiry form; it is separate from optional tracking consent. Admin authentication uses the necessary HttpOnly `alemax_admin` cookie with an eight-hour lifetime.
+
+Before adding optional services, add purpose-specific settings, enforce consent checks before loading each service, implement shutdown/cookie cleanup on withdrawal, and update the banner version and CMS privacy/cookie policies with the actual vendors, purposes and retention periods. The current choice cookie is a browser preference record, not a server-side consent audit. Review the published CMS policies against the deployed services before launch; the banner alone does not certify legal compliance.
+
+Design references: https://www.aepd.es/guias/guia-cookies.pdf and https://www.edpb.europa.eu/system/files/2023-01/edpb_20230118_report_cookie_banner_taskforce_en.pdf

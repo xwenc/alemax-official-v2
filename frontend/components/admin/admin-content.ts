@@ -72,7 +72,7 @@ export function sectionUrl(kind: CmsKind) {
   );
 }
 export const publicContentUrl = (kind: CmsKind, slug: string, locale: string) =>
-  `/${locale}/${kind === "page" ? slug : kind === "product" ? `products/${slug}` : kind === "production-base" ? `production-base/${slug}` : kind === "article" ? `activity/${slug}` : `products?cat=${slug}`}`;
+  `/${locale}/${kind === "page" ? (slug === "home" ? "" : slug) : kind === "product" ? `products/${slug}` : kind === "production-base" ? `production-base/${slug}` : kind === "article" ? `activity/${slug}` : `products?cat=${slug}`}`;
 export async function adminRequest<T>(
   path: string,
   method = "GET",

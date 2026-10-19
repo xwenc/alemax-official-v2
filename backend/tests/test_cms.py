@@ -197,3 +197,58 @@ def test_translation_retains_rich_text_structure_and_links(client,monkeypatch):
     assert body['content'][2]['attrs']['start']==3
     assert body['content'][2]['content'][0]['content'][0]['content'][0]['text']=='Grado alimentario'
     assert result['blocks']==[]
+
+@pytest.mark.parametrize('glossary, expected', [('missing-glossary', 'DEEPL_GLOSSARY_ID'), ('', 'DEEPL_API_URL')])
+def test_translation_404_has_actionable_safe_message(client, monkeypatch, glossary, expected):
+    monkeypatch.setattr(settings, 'deepl_api_key', 'secret-test-key')
+    monkeypatch.setattr(settings, 'deepl_glossary_id', glossary)
+    original = httpx.Client
+    monkeypatch.setattr(translation.httpx, 'Client', lambda **kwargs: original(
+        transport=httpx.MockTransport(lambda request: httpx.Response(404, text='confidential provider body')),
+        **kwargs))
+    with pytest.raises(RuntimeError, match=expected) as error:
+        translation.translate_fields(FIELDS)
+    assert 'confidential' not in str(error.value)
+    assert 'secret-test-key' not in str(error.value)
+
+
+def test_optional_glossary_is_omitted_when_unconfigured(client, monkeypatch):
+    import json
+    monkeypatch.setattr(settings, 'deepl_api_key', 'test-key')
+    monkeypatch.setattr(settings, 'deepl_glossary_id', '')
+    original = httpx.Client
+    def provider(request):
+        payload = json.loads(request.content)
+        assert 'glossary_id' not in payload
+        return httpx.Response(200, json={'translations': [{'text': text} for text in payload['text']]})
+    monkeypatch.setattr(translation.httpx, 'Client', lambda **kwargs: original(
+        transport=httpx.MockTransport(provider), **kwargs))
+    assert translation.translate_fields(FIELDS)['title'] == 'Estearato de calcio'
+
+@pytest.mark.parametrize('kind', ['page', 'product', 'category', 'production-base', 'article'])
+def test_seo_copy_persists_by_locale_and_only_changes_live_after_publish(client, kind):
+    en = {**FIELDS, 'seo_title': 'English search title', 'seo_description': 'English search description'}
+    response = client.post('/cms/content', headers=HEADERS,
+        json={'kind': kind, 'slug': 'home' if kind == 'page' else 'seo-example', 'fields': en})
+    assert response.status_code == 201
+    row = response.json()
+    # Read through a new request/session to prove these fields were persisted.
+    saved = next(i for i in client.get('/cms/content', headers=HEADERS).json()['items'] if i['id'] == row['id'])
+    assert saved['translations']['en']['fields']['seo_title'] == en['seo_title']
+    assert saved['translations']['en']['fields']['seo_description'] == en['seo_description']
+    assert not catalog(client, 'en')['items']
+    row = mutate(client, row, 'publish', locale='en').json()
+    es = {**FIELDS, 'seo_title': 'Título para buscadores', 'seo_description': 'Descripción en español'}
+    response = client.put(f"/cms/content/{row['id']}/spanish", headers=HEADERS,
+        json={'revision': row['revision'], 'source_version': row['version'], 'fields': es})
+    assert response.status_code == 200
+    row = mutate(client, response.json(), 'review').json()
+    row = mutate(client, row, 'publish', locale='es').json()
+    assert catalog(client, 'en')['items'][0]['fields']['seo_title'] == en['seo_title']
+    assert catalog(client, 'es')['items'][0]['fields']['seo_description'] == es['seo_description']
+    updated = {**en, 'seo_description': 'Revised search description'}
+    response = update(client, row, updated)
+    assert response.status_code == 200
+    assert catalog(client, 'en')['items'][0]['fields']['seo_description'] == en['seo_description']
+    row = mutate(client, response.json(), 'publish', locale='en').json()
+    assert catalog(client, 'en')['items'][0]['fields']['seo_description'] == updated['seo_description']

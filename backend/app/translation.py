@@ -1,6 +1,7 @@
 """Persistent translation worker: python -m app.translation."""
 import copy
 import html
+import logging
 import re
 import time
 import xml.etree.ElementTree as ET
@@ -10,6 +11,8 @@ from sqlalchemy import or_, select, update
 from sqlalchemy.orm.exc import StaleDataError
 from .cms import Content, TranslationJob, now
 from .database import Session, settings
+
+logger = logging.getLogger('alemax.translation')
 
 # Lock identifiers, formulas, numbers/units, brands and local terminology before translation.
 TERMS = {'Calcium Stearate': 'Estearato de calcio', 'Silicon Dioxide': 'Dióxido de silicio', 'Potassium Sorbate': 'Sorbato de potasio'}
@@ -57,9 +60,18 @@ def translate_fields(fields):
             payload = {'text': [protect(obj[key]) for obj, key in items], 'source_lang': 'EN', 'target_lang': 'ES', 'tag_handling': 'xml', 'ignore_tags': ['keep'], 'preserve_formatting': True}
             if settings.deepl_glossary_id:
                 payload['glossary_id'] = settings.deepl_glossary_id
+            logger.info('DeepL request: glossary_id=%s text_count=%d encoded_size=%d',
+                        settings.deepl_glossary_id or '(none)', len(items), len(str(payload).encode('utf-8')))
             response = client.post(settings.deepl_api_url, headers={'Authorization': f'DeepL-Auth-Key {settings.deepl_api_key}'}, json=payload)
+            logger.info('DeepL response: HTTP %d', response.status_code)
             # Do not persist provider response bodies, which can contain confidential source text.
             if response.status_code != 200:
+                if response.status_code == 400 and settings.deepl_glossary_id:
+                    raise RuntimeError('Translation provider returned HTTP 400. Check that DEEPL_GLOSSARY_ID contains an EN-to-ES dictionary and that the translation parameters are valid.')
+                if response.status_code == 404 and settings.deepl_glossary_id:
+                    raise RuntimeError('Translation provider returned HTTP 404. The configured DEEPL_GLOSSARY_ID may not exist for this API key. Correct it or leave it empty, restart the API and worker, then retry.')
+                if response.status_code == 404:
+                    raise RuntimeError('Translation provider returned HTTP 404. Check DEEPL_API_URL and any proxy configuration, then retry.')
                 raise RuntimeError(f'Translation provider returned HTTP {response.status_code}. Check credentials/quota and retry.')
             translations = response.json().get('translations', [])
             if len(translations) != len(items):
@@ -133,10 +145,14 @@ def run_once():
     return True
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(name)s: %(message)s')
+    logging.getLogger('httpx').setLevel(logging.WARNING)
+    logger.info('Translation worker started; waiting for queued jobs.')
     while True:
         try:
             if not run_once():
                 time.sleep(3)
-        except Exception:
+        except Exception as error:
             # Database may not be ready during deployment. The durable queue will be retried.
+            logger.error('Worker iteration failed (%s); retrying in 5 seconds.', type(error).__name__)
             time.sleep(5)

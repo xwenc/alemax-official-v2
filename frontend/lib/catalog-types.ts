@@ -1,5 +1,10 @@
 import type { CmsFields, CmsPublishedItem } from "./cms-types";
-export type SiteCategory = { _id: string; name: string; slug: string };
+export type SiteCategory = {
+  _id: string;
+  name: string;
+  slug: string;
+  fields?: CmsFields;
+};
 export type SiteProduct = {
   _id: string;
   name: string;
