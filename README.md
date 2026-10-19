@@ -7,7 +7,7 @@ Next.js 16 / React 19 / Tailwind CSS 4 frontend, FastAPI / SQLAlchemy backend, M
 - EN / ES content, responsive homepage, two-slide hero, shrinking navigation and mobile menu.
 - Six production categories, ingredient search, product filtering, detail dialogs and inquiry prefill.
 - Validated inquiry form, explicit privacy consent, loading/error/success feedback and SMTP delivery to the company mailbox.
-- Cloudflare Turnstile verification, honeypot and per-email throttling. FastAPI is private to the Compose network; reserved server-side calls use `frontend/lib/internal-api.ts` with a shared internal key. Public inquiries use a Next.js Server Action and SMTP, bypassing FastAPI and MySQL.
+- Cloudflare Turnstile verification, honeypot and per-email throttling. FastAPI is private to the Compose network; reserved server-side calls use `frontend/lib/internal-api.ts` with a shared internal key. Public inquiries use a Next.js Server Action and SMTP, bypassing FastAPI and MySQL. The private FastAPI service also manages bilingual CMS content and the translation queue.
 - Local copies of public Alemax images and Logo. Asset attribution: `frontend/public/images/SOURCES.md`.
 
 ## Docker deployment
@@ -34,7 +34,16 @@ npm --prefix frontend ci
 npm run dev
 ```
 
-The root command loads `.env` if present, sets `NODE_ENV` and `ENVIRONMENT` to `development`, and starts Next.js with hot reload. Open http://localhost:3100 (or `WEB_PORT` from `.env`). Local origins are configured automatically. SMTP settings are reused from `.env`; sending inquiries still requires a working SMTP account. The public website does not require the backend or database to run.
+The root command loads `.env`, then `.env.development.local` (shell environment takes precedence), sets development mode and starts Next.js, the local FastAPI server and a translation worker. The first run creates `.env.development.local` with a random local administrator password, session secret and internal API key. It uses a separate SQLite database at `backend/.local/cms.db` and uploaded images at `backend/.local/uploads`; it does not connect to the production MySQL database. Open http://localhost:3100/admin (or `WEB_PORT` from `.env`). SMTP settings are reused from `.env`; sending inquiries still requires a working SMTP account.
+
+Install backend dependencies once before using the root command:
+
+```sh
+python3.12 -m venv backend/.venv
+backend/.venv/bin/pip install -r backend/requirements.txt
+```
+
+CMS-managed public content is loaded server-side from the published CMS API, including homepage products, categories, production bases and search. API requests use `no-store`; failed requests surface an error instead of falling back to static or unpublished content. `legacy-content.json` is retained only as an input to the offline seed export script and is not imported by the frontend.
 
 To run the entire stack with frontend hot reload and backend reload, configure `.env` from `.env.example`, then run:
 
@@ -93,11 +102,11 @@ cd ../backend
 .venv/bin/python -m pytest tests -q
 ```
 
-Backend tests use an isolated temporary SQLite database; Docker integration verification uses MySQL. Inquiry data has no public listing endpoint. Public inquiries are emailed and no longer stored in MySQL. Existing inquiry records remain intact. The private FastAPI storage endpoint remains available to authorized internal callers; an administration interface is not included.
+Backend tests use an isolated temporary SQLite database; Docker integration verification uses MySQL. Inquiry data has no public listing endpoint. Public inquiries are emailed and no longer stored in MySQL. Existing inquiry records remain intact. The private FastAPI storage endpoint remains available to authorized internal callers; content administration is available at `/admin`; inquiry records are not exposed by the content administrator.
 
 ## Content
 
-Edit `frontend/lib/content.ts` for bilingual text, products and categories. Replace images under `frontend/public/images`. The homepage updates section contains company/resource links rather than fabricated dated news. Product and production dialogs request technical documentation via the inquiry form. Existing Alemax links provide the complete catalog and legal information. The brand panel presents ingredient categories until separate brand names are provided.
+Use `/admin` for published products, categories, production bases, About us, contact/legal page content and update articles. `frontend/lib/content.ts` holds interface labels and homepage marketing copy. Replace images under `frontend/public/images`. The homepage updates section displays up to three published CMS articles. Product and production dialogs request technical documentation via the inquiry form. Existing Alemax links provide the complete catalog and legal information. The brand panel presents published CMS ingredient categories.
 
 ## 旧官网内容迁移
 
@@ -114,3 +123,31 @@ Edit `frontend/lib/content.ts` for bilingual text, products and categories. Repl
 配置缺失或 SMTP 未接受投递时显示失败，不显示虚假的成功。成功代表 SMTP 接受邮件，不保证已进入收件箱；上线后使用公司邮箱进行真实投递检查。本机已用模拟 SMTP 服务器验证 STARTTLS、收件人和 Reply-To，尚未配置真实 SMTP 账号。
 
 更新配置后运行 `docker compose up -d --build web`。只有 web 发布宿主机端口，api 和 db 不发布端口；不要为它们增加公网端口映射。单实例使用进程内限流，多实例需共享限流存储。运行 `cd frontend && npm test` 验证邮件处理（Node.js 22，SMTP 测试需要 openssl）。
+
+
+## Bilingual content administration
+
+The admin workspace uses a shared sidebar and account header, with separate route files for `/admin/overview`, `/admin/products`, `/admin/categories`, `/admin/production-bases`, `/admin/pages`, `/admin/updates` and `/admin/settings`. Each collection provides search, status/date filters and pagination. Content creation and editing live at `/admin/content/new` and `/admin/content/[id]`; English editing, Spanish review and publishing are separate components under `frontend/components/admin`.
+
+Visit `/admin`. The administration interface is English; the public site uses `/en/...` and `/es/...`. Local credentials are stored in the ignored `.env.development.local` file (`ADMIN_USERNAME` and `ADMIN_PASSWORD`). Deployment requires an `ADMIN_PASSWORD` of at least 12 characters and a random `ADMIN_SESSION_SECRET` of at least 32 characters in `.env`; generate the latter with `openssl rand -hex 32`. There is one administrator account, an eight-hour signed HttpOnly session, same-origin mutation checks and a single-process login attempt limit. Changing the password or session secret invalidates sessions. Production must use HTTPS for the Secure cookie. Multi-instance deployments should put a shared login rate limiter at the reverse proxy.
+
+1. Select an existing item or choose **New content**. Products, categories, production bases, fixed pages and update articles have separate content types. Fixed page slugs are `about`, `activity`, `contact`, `privacy`, `cookie`, `terms`; article slugs produce `/en/activity/[slug]` and `/es/activity/[slug]`. URLs and content types are immutable after creation.
+2. Enter the English title and summary, then write the body in the rich-text editor (headings, bold, italic, underline, strikethrough, lists, quotes, links and undo/redo). Add product relationships, an image, display order and SEO/accessibility fields. PNG/JPEG/WebP image uploads are limited to 10 MB and use content-addressed filenames; remove unwanted URLs before saving.
+3. **Save English draft** persists the source and queues Spanish translation. It never replaces a published snapshot. Existing Spanish drafts become **outdated** when the English source or shared fields change.
+4. Under **Spanish edition**, inspect the English source and edit the Spanish fields, or **Generate / retry translation**. Saving Spanish marks it as ready for review against the currently displayed English version. Select **Approve Spanish** once it has been checked.
+5. Under **Preview & publish**, preview both saved editions and publish English and Spanish separately. Spanish must match the current English source version and be approved. Unpublishing removes only that language's live snapshot. No public endpoint exposes drafts.
+
+Configure `DEEPL_API_KEY` on both the API and worker to enable automatic translation. Free accounts use `https://api-free.deepl.com/v2/translate`; Pro accounts use `https://api.deepl.com/v2/translate`. `DEEPL_GLOSSARY_ID` optionally selects an existing EN–ES DeepL glossary. A small built-in terminology map lives in `backend/app/translation.py`; brands, formulas, codes, numbers/units, URLs and emails are protected with ignored XML tags, and changed protected tokens cause translation failure. Editors should still review technical terminology. Only translatable text is sent to DeepL; images, passwords and shared product identifiers are not sent as separate fields.
+
+The worker (`python -m app.translation`) processes a database-backed queue with atomic claims. Source-version and revision checks prevent late jobs from overwriting newer source or manual edits. Failed jobs remain visible and can be retried; interrupted running jobs become eligible again after a 15-minute lease. Missing credentials produce an explicit configuration error; they never produce fake translations or prevent manual Spanish editing. Existing imported Spanish is retained without calling a provider.
+
+CMS tables are additive (`cms_content`, `cms_translation_jobs`). On the first startup against an empty CMS, `backend/app/seed-content.json` imports 88 records with both existing language editions published. The importer does nothing when CMS content already exists. `CMS_SEED_ON_START=false` disables it. To regenerate the seed for a new empty installation, run `node --experimental-strip-types scripts/export-cms-seed.mjs`; this does not update a populated database. Back up the MySQL volume and the `cms_uploads` volume together. Future schema changes require versioned migrations; restarting `create_all` does not alter existing columns.
+
+The public frontend reads only published snapshots on the server, using request-scoped deduplication and `cache: no-store`. Publishing appears on the next page request without rebuilding or waiting for stale caches. Missing Spanish content shows a Spanish notice with an English link and `noindex`, rather than showing an English body under a Spanish URL. Language switching preserves path and query parameters. Page metadata comes from published localized SEO fields, and `proxy.ts` supplies the server-rendered HTML language.
+
+Run `npm run dev` locally or `npm run dev:docker` for the MySQL-backed stack. Production uses `docker compose up -d --build` for `db`, `api`, `worker` and `web`; API and database remain private to the Compose network. This implementation's automated backend workflow tests run against isolated SQLite. The same 16-test suite was also verified against an isolated MySQL 8.4 container; set CMS_TEST_DATABASE_URL to an empty, disposable test database to repeat it. Tests delete CMS records in that database, so never use a production URL. Real DeepL translation requires provider credentials and quota; mocked tests cover request formatting, protected tokens, failures, retries and publication isolation.
+
+
+### Rich-text body format
+
+The Body content editor uses Tiptap and stores an optional structured `body` document inside the existing localized fields JSON. No database column migration is required. Existing `blocks` remain readable and convert to the editor automatically; new drafts also include plain blocks for compatibility. `body`, when present, is authoritative for previews and public rendering. English and Spanish use the same editor. Translation visits only text nodes, retaining marks, list structure, headings and link destinations; it does not translate URLs. Public pages render a validated node/mark allowlist as React elements, not executable HTML. The API rejects script nodes, unsafe link schemes, invalid nesting, excessive depth and oversized bodies, and drops unsupported attributes.

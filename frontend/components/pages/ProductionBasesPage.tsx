@@ -1,9 +1,15 @@
-import legacy from "@/lib/legacy-content.json";
+import type { SiteCatalog } from "@/lib/catalog-types";
 import { type Locale } from "@/lib/content";
 import PageHeading from "./PageHeading";
 import { pageLabels } from "./content";
-export default function ProductionBasesPage({ locale }: { locale: Locale }) {
-  const data = legacy[locale],
+export default function ProductionBasesPage({
+  locale,
+  catalog,
+}: {
+  locale: Locale;
+  catalog: SiteCatalog;
+}) {
+  const data = catalog,
     labels = pageLabels[locale];
   const origins = data.pages.filter((p) =>
     p.path.startsWith("production-base/"),

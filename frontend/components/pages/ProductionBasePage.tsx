@@ -1,17 +1,19 @@
-import legacy from "@/lib/legacy-content.json";
+import type { SiteCatalog } from "@/lib/catalog-types";
 import { copy, type Locale } from "@/lib/content";
 import PageHeading from "./PageHeading";
 import ContentBody from "./ContentBody";
 import { notFound } from "next/navigation";
 export default function ProductionBasePage({
   locale,
+  catalog,
   slug,
 }: {
   locale: Locale;
+  catalog: SiteCatalog;
   slug: string;
 }) {
   const path = `production-base/${slug}`,
-    data = legacy[locale],
+    data = catalog,
     t = copy[locale],
     contact = `/${locale}/contact`;
   const page = data.pages.find((p) => p.path === path);

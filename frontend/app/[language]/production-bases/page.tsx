@@ -1,3 +1,5 @@
+import { getCatalog, missingTranslation } from "@/lib/catalog";
+import TranslationUnavailable from "@/components/pages/TranslationUnavailable";
 import { Suspense } from "react";
 import Website from "@/components/Website";
 import ProductionBasesPage from "@/components/pages/ProductionBasesPage";
@@ -9,10 +11,11 @@ export async function generateMetadata({ params, searchParams }: PageProps) {
 export default async function Page({ params }: PageProps) {
   const { language, slug } = await params;
   const locale = pageLocale(language);
+  const data = await getCatalog(locale);
   return (
-    <Website initialLocale={locale}>
+    <Website initialLocale={locale} catalogData={data}>
       <Suspense>
-        <ProductionBasesPage locale={locale} />
+        <ProductionBasesPage locale={locale} catalog={data} />
       </Suspense>
     </Website>
   );

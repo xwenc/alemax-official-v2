@@ -1,16 +1,19 @@
-import legacy from "@/lib/legacy-content.json";
+import type { SiteCatalog } from "@/lib/catalog-types";
 import { copy, type Locale } from "@/lib/content";
+import ContentBody from "./ContentBody";
 import PageHeading from "./PageHeading";
 import { pageLabels } from "./content";
 import { notFound } from "next/navigation";
 export default function ProductDetailPage({
   locale,
+  catalog,
   slug,
 }: {
   locale: Locale;
+  catalog: SiteCatalog;
   slug: string;
 }) {
-  const product = legacy[locale].products.find((p) => p.slug === slug);
+  const product = catalog.products.find((p) => p.slug === slug);
   if (!product) notFound();
   const labels = pageLabels[locale],
     t = copy[locale],
@@ -36,6 +39,17 @@ export default function ProductDetailPage({
               </>
             )}
           </dl>
+          {product.fields && (
+            <ContentBody
+              page={{
+                path: `products/${slug}`,
+                title: product.name,
+                blocks: product.fields.blocks,
+                images: product.images || [],
+                fields: product.fields,
+              }}
+            />
+          )}
           <p>{labels.spec}</p>
           <a
             className="button"

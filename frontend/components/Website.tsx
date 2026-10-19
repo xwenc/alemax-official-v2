@@ -1,24 +1,21 @@
 "use client";
 import { ReactNode, useEffect, useRef, useState } from "react";
-import {
-  bases,
-  copy,
-  Locale,
-  products,
-  portfolioCategories,
-} from "@/lib/content";
+import { copy, Locale } from "@/lib/content";
 import InquiryForm from "./InquiryForm";
-import legacy from "@/lib/legacy-content.json";
+import ProductImage from "./ProductImage";
+import type { SiteCatalog } from "@/lib/catalog-types";
 const image = (file: string) => `/images/${file}`;
 export default function Website({
   children,
+  catalogData,
   initialLocale = "en",
 }: {
   children?: ReactNode;
+  catalogData: SiteCatalog;
   initialLocale?: Locale;
 }) {
-  const [locale, setLocale] = useState<Locale>(initialLocale),
-    [slide, setSlide] = useState(0),
+  const locale = initialLocale;
+  const [slide, setSlide] = useState(0),
     [compact, setCompact] = useState(false),
     [menu, setMenu] = useState(false),
     [search, setSearch] = useState(false),
@@ -28,14 +25,24 @@ export default function Website({
   const dialog = useRef<HTMLDialogElement>(null),
     searchDialog = useRef<HTMLDialogElement>(null);
   const t = copy[locale];
-  const catalog = legacy[locale];
+  const catalog = catalogData;
   const home = `/${locale}`;
-  const baseUrl = (id: string) => {
-    const i = bases.findIndex((b) => b.id === id);
-    return `${home}/${catalog.pages.filter((p) => p.path.startsWith("production-base/"))[i]?.path || "production-bases"}`;
-  };
-  const categoryUrl = (id: string) =>
-    `${home}/products?cat=${catalog.categories[portfolioCategories.findIndex((c) => c.id === id)]?.slug || ""}`;
+  const bases = catalog.pages
+    .filter((page) => page.path.startsWith("production-base/"))
+    .map((page) => ({
+      id: page.path,
+      name: page.title,
+      image: page.images[0],
+      desc: page.fields?.summary || "",
+    }));
+  const products = catalog.products.map((product) => ({
+    ...product,
+    id: product.slug,
+    summary: product.fields?.summary || "",
+  }));
+  const baseUrl = (id: string) => `${home}/${id}`;
+  const categoryUrl = (slug: string) =>
+    `${home}/products?cat=${encodeURIComponent(slug)}`;
   const destinations = [
     `${home}#production-bases`,
     `${home}/production-bases`,
@@ -45,8 +52,6 @@ export default function Website({
     `${home}/contact`,
   ];
   useEffect(() => {
-    const lang = new URLSearchParams(window.location.search).get("lang");
-    if (lang === "es") setLocale(lang);
     // Use separate thresholds so small scroll movements cannot toggle the header repeatedly.
     const scroll = () => {
       const y = Math.max(0, window.scrollY);
@@ -69,18 +74,12 @@ export default function Website({
   useEffect(() => {
     if (selected) {
       const b = bases.find((b) => b.id === selected);
-      const aliases: Record<string, string> = {
-        carrageenan: "carrageenan",
-        koh: "potassium-hydroxide",
-        kms: "potassium-metabisulfite",
-        sorbate: "potassium-sorbate",
-      };
-      const product = catalog.products.find((p) =>
-        p.slug.includes(aliases[selected] || selected),
-      );
+      const product = catalog.products.find((p) => p.slug === selected);
       window.location.href = b
         ? baseUrl(b.id)
-        : `${home}/products/${product?.slug || selected}`;
+        : product
+          ? `${home}/products/${product.slug}`
+          : `${home}/products`;
     } else dialog.current?.close();
   }, [selected]);
   useEffect(() => {
@@ -88,7 +87,6 @@ export default function Website({
     else searchDialog.current?.close();
   }, [search]);
   const switchLanguage = (lang: Locale) => {
-    setLocale(lang);
     const u = new URL(window.location.href);
     u.pathname = /^\/(en|es)(\/|$)/.test(u.pathname)
       ? u.pathname.replace(/^\/(en|es)/, `/${lang}`)
@@ -114,7 +112,7 @@ export default function Website({
       title: p.name,
       kind: p.code || p.category?.name || "ALEMAX",
     })),
-    ...bases.map((b) => ({ id: b.id, title: b[locale], kind: t.nav[1] })),
+    ...bases.map((b) => ({ id: b.id, title: b.name, kind: t.nav[1] })),
   ].filter((p) =>
     `${p.title} ${p.kind}`.toLowerCase().includes(query.toLowerCase()),
   );
@@ -191,7 +189,7 @@ export default function Website({
                           setMenu(false);
                         }}
                       >
-                        {b[locale]}
+                        {b.name}
                       </button>
                     ))}
                   </div>
@@ -285,11 +283,13 @@ export default function Website({
                     key={b.id}
                     onClick={() => setSelected(b.id)}
                   >
-                    <img loading="lazy" src={image(b.image)} alt={b[locale]} />
+                    {b.image && (
+                      <img loading="lazy" src={b.image} alt={b.name} />
+                    )}
                     <div className="tile-overlay" />
                     <span className="tile-number">0{i + 1}</span>
                     <span className="tile-label">
-                      {b[locale]}
+                      {b.name}
                       <span>↗</span>
                     </span>
                     <span className="tile-description">{b.desc}</span>
@@ -311,14 +311,14 @@ export default function Website({
               >
                 <div className="brand-panel">
                   <div className="brand-links">
-                    {portfolioCategories.map((b) => (
+                    {catalog.categories.map((b) => (
                       <button
-                        key={b.id}
+                        key={b.slug}
                         onClick={() => {
-                          window.location.href = categoryUrl(b.id);
+                          window.location.href = categoryUrl(b.slug);
                         }}
                       >
-                        {b[locale]}
+                        {b.name}
                         <span>↗</span>
                       </button>
                     ))}
@@ -346,14 +346,18 @@ export default function Website({
                   </a>
                 </div>
                 <div className="product-grid">
-                  {products.map((p) => (
+                  {products.slice(0, 4).map((p) => (
                     <article className="product" key={p.id}>
                       <button
                         className="product-image"
                         onClick={() => setSelected(p.id)}
                         aria-label={`${t.inquire}: ${p.name}`}
                       >
-                        <img src={image(p.image)} alt={p.name} loading="lazy" />
+                        <ProductImage
+                          src={p.image}
+                          alt={p.fields?.image_alt || p.name}
+                          locale={locale}
+                        />
                         <span>↗</span>
                       </button>
                       <p className="product-code">{p.code}</p>
@@ -362,7 +366,7 @@ export default function Website({
                           {p.name}
                         </button>
                       </h3>
-                      <p>{p[locale]}</p>
+                      <p>{p.summary}</p>
                       <button className="text-link" onClick={() => ask(p.name)}>
                         {t.inquire} ↗
                       </button>
@@ -380,26 +384,37 @@ export default function Website({
                 <p>{t.updatesText}</p>
               </div>
               <div className="updates-grid">
-                {["plant.jpg", "hydrocolloids.png", "equipment.jpg"].map(
-                  (file, i) => (
+                {catalog.articles?.length ? (
+                  catalog.articles.slice(0, 3).map((article) => (
                     <a
-                      href={`${home}/${["production-bases", "products", "contact"][i]}`}
+                      href={`${home}/activity/${article.slug}`}
                       className="update"
-                      key={file}
+                      key={article.id}
                     >
-                      <div className="update-image">
-                        <img src={image(file)} loading="lazy" alt="" />
-                      </div>
-                      <p className="eyebrow green">
-                        {["ALEMAX", t.nav[2], t.nav[5]][i]}
-                      </p>
+                      {article.shared.images?.[0] && (
+                        <div className="update-image">
+                          <img
+                            src={article.shared.images[0]}
+                            loading="lazy"
+                            alt={
+                              article.fields.image_alt || article.fields.title
+                            }
+                          />
+                        </div>
+                      )}
                       <h3>
-                        {t.cards[i]}
+                        {article.fields.title}
                         <span>↗</span>
                       </h3>
-                      <p>{t.cardDescs[i]}</p>
+                      <p>{article.fields.summary}</p>
                     </a>
-                  ),
+                  ))
+                ) : (
+                  <p>
+                    {locale === "en"
+                      ? "No updates published yet."
+                      : "Aún no hay novedades publicadas."}
+                  </p>
                 )}
               </div>
             </section>
@@ -479,17 +494,17 @@ export default function Website({
           <>
             <img
               className="detail-photo"
-              src={image((item || base)!.image)}
-              alt={item?.name || base?.[locale] || ""}
+              src={(item || base)!.image || undefined}
+              alt={item?.name || base?.name || ""}
             />
             <div className="detail-body">
               <p className="eyebrow green">{item?.code || t.basesLabel}</p>
-              <h2>{item?.name || base?.[locale]}</h2>
-              <p>{item?.[locale] || base?.desc}</p>
+              <h2>{item?.name || base?.name}</h2>
+              <p>{item?.summary || base?.desc}</p>
               <p>{t.detail}</p>
               <button
                 className="button"
-                onClick={() => ask(item?.name || base?.[locale] || "")}
+                onClick={() => ask(item?.name || base?.name || "")}
               >
                 {t.inquire} ↗
               </button>

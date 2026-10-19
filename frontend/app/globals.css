@@ -1438,3 +1438,5 @@ dialog::backdrop {
 .contact-page .verification small {
   color: #757575;
 }
+
+.rich-text-content{overflow-wrap:anywhere}.rich-text-content p{white-space:pre-wrap}.rich-text-content ul,.rich-text-content ol{padding-left:1.6em;margin:20px 0;list-style:revert}.rich-text-content li{margin:8px 0}.rich-text-content li p{margin:4px 0}.rich-text-content strong{font-weight:700}.rich-text-content em{font-style:italic}.rich-text-content a{color:var(--forest);text-decoration:underline;text-underline-offset:3px}.rich-text-content blockquote{border-left:3px solid #7ea474;padding:4px 0 4px 22px;margin:24px 0;color:#647363}.rich-text-content hr{border:0;border-top:1px solid #d6dfd2;margin:28px 0}.rich-text-content h3{margin:24px 0 14px}.rich-text-content>:first-child{margin-top:0}

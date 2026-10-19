@@ -1,4 +1,7 @@
 services:
+  worker:
+    volumes:
+      - ./backend/app:/app/app:ro
   api:
     environment:
       ENVIRONMENT: development

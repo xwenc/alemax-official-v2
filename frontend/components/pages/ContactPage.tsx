@@ -1,11 +1,18 @@
 "use client";
-import legacy from "@/lib/legacy-content.json";
+import type { SiteCatalog } from "@/lib/catalog-types";
 import { copy, type Locale } from "@/lib/content";
+import ContentBody from "./ContentBody";
 import PageHeading from "./PageHeading";
 import { useSearchParams } from "next/navigation";
 import InquiryForm from "../InquiryForm";
-export default function ContactPage({ locale }: { locale: Locale }) {
-  const data = legacy[locale],
+export default function ContactPage({
+  locale,
+  catalog,
+}: {
+  locale: Locale;
+  catalog: SiteCatalog;
+}) {
+  const data = catalog,
     t = copy[locale];
   const params = useSearchParams();
   const title = data.pages.find((p) => p.path === "contact")!.title;

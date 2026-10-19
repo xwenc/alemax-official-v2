@@ -1,5 +1,4 @@
-import legacy from "@/lib/legacy-content.json";
-export type ContentPage = (typeof legacy)["en"]["pages"][number];
+export type { SitePage as ContentPage } from "@/lib/catalog-types";
 export const pageLabels = {
   en: {
     catalog: "Ingredient portfolio",

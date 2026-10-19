@@ -1,12 +1,18 @@
 "use client";
-import legacy from "@/lib/legacy-content.json";
+import type { SiteCatalog } from "@/lib/catalog-types";
 import { copy, type Locale } from "@/lib/content";
 import PageHeading from "./PageHeading";
 import { pageLabels } from "./content";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-export default function ProductsPage({ locale }: { locale: Locale }) {
-  const data = legacy[locale],
+export default function ProductsPage({
+  locale,
+  catalog,
+}: {
+  locale: Locale;
+  catalog: SiteCatalog;
+}) {
+  const data = catalog,
     t = copy[locale],
     labels = pageLabels[locale];
   const params = useSearchParams();

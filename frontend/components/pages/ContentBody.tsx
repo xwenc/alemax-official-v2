@@ -1,3 +1,5 @@
+import RichText from "@/components/content/RichText";
+import { blocksToDocument } from "@/lib/rich-text";
 import type { ReactNode } from "react";
 import type { ContentPage } from "./content";
 export default function ContentBody({
@@ -17,7 +19,7 @@ export default function ContentBody({
             <img
               key={src + i}
               src={src}
-              alt={`${page.title} ${i + 1}`}
+              alt={page.fields?.image_alt || `${page.title} ${i + 1}`}
               loading="lazy"
             />
           ))}
@@ -25,17 +27,18 @@ export default function ContentBody({
       )}
       <article className="legacy-prose">
         {children}
-        {page.blocks
-          .filter((b) => !production || ["p", "h2"].includes(b.tag))
-          .map((b, i) =>
-            b.tag.startsWith("h") ? (
-              <h2 key={i}>{b.text}</h2>
-            ) : (
-              <p className={b.tag === "li" ? "legal-list-item" : ""} key={i}>
-                {b.text}
-              </p>
-            ),
-          )}
+        {page.fields?.summary && <p>{page.fields.summary}</p>}
+        <RichText
+          document={
+            page.fields?.body ||
+            blocksToDocument(
+              page.blocks.filter(
+                (b) =>
+                  !production || !!page.fields || ["p", "h2"].includes(b.tag),
+              ),
+            )
+          }
+        />
       </article>
     </>
   );

@@ -1,9 +1,15 @@
-import legacy from "@/lib/legacy-content.json";
+import type { SiteCatalog } from "@/lib/catalog-types";
 import { type Locale } from "@/lib/content";
 import PageHeading from "./PageHeading";
 import ContentBody from "./ContentBody";
-export default function PrivacyPage({ locale }: { locale: Locale }) {
-  const page = legacy[locale].pages.find((p) => p.path === "privacy")!;
+export default function PrivacyPage({
+  locale,
+  catalog,
+}: {
+  locale: Locale;
+  catalog: SiteCatalog;
+}) {
+  const page = catalog.pages.find((p) => p.path === "privacy")!;
   return (
     <>
       <PageHeading locale={locale} title={page.title} />

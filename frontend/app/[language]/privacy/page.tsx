@@ -1,3 +1,6 @@
+import { notFound } from "next/navigation";
+import { getCatalog, missingTranslation } from "@/lib/catalog";
+import TranslationUnavailable from "@/components/pages/TranslationUnavailable";
 import { Suspense } from "react";
 import Website from "@/components/Website";
 import PrivacyPage from "@/components/pages/PrivacyPage";
@@ -9,10 +12,18 @@ export async function generateMetadata({ params, searchParams }: PageProps) {
 export default async function Page({ params }: PageProps) {
   const { language, slug } = await params;
   const locale = pageLocale(language);
+  const data = await getCatalog(locale);
+  if (missingTranslation(data, "page", "privacy"))
+    return (
+      <Website initialLocale={locale} catalogData={data}>
+        <TranslationUnavailable path={"privacy"} />
+      </Website>
+    );
+  if (data.cms && !data.pages.some((p) => p.path === "privacy")) notFound();
   return (
-    <Website initialLocale={locale}>
+    <Website initialLocale={locale} catalogData={data}>
       <Suspense>
-        <PrivacyPage locale={locale} />
+        <PrivacyPage locale={locale} catalog={data} />
       </Suspense>
     </Website>
   );

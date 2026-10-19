@@ -3,6 +3,7 @@ import "server-only";
 export async function internalApi(path: string, init: RequestInit = {}) {
   const base = process.env.API_INTERNAL_URL;
   const key = process.env.INTERNAL_API_KEY;
+
   if (!base || !key) throw new Error("Internal API not configured");
   if (!path.startsWith("/") || path.startsWith("//") || path.includes("\\"))
     throw new Error("Invalid internal API path");

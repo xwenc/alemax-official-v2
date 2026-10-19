@@ -1,11 +1,3 @@
-import os
-import tempfile
-from pathlib import Path
-
-# SQLite is only used by this isolated test suite. Deployment uses MySQL.
-os.environ['DATABASE_URL'] = 'sqlite:///' + str(Path(tempfile.mkdtemp()) / 'test.db')
-os.environ['INTERNAL_API_KEY'] = 'test-service-key'
-os.environ['ENVIRONMENT'] = 'development'
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 from app.main import app, Session, Inquiry, recent, settings

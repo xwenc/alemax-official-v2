@@ -9,23 +9,11 @@ from typing import Literal
 import httpx
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel, EmailStr, Field, field_validator
-from pydantic_settings import BaseSettings
-from sqlalchemy import Boolean, DateTime, String, Text, create_engine, text
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
+from sqlalchemy import Boolean, DateTime, String, Text, text
+from sqlalchemy.orm import Mapped, mapped_column
 
-class Settings(BaseSettings):
-    database_url: str = 'mysql+pymysql://alemax:alemax@localhost:3306/alemax'
-    internal_api_key: str = ''
-    captcha_secret_key: str = ''
-    captcha_site_key: str = ''
-    environment: str = 'development'
-
-settings = Settings()
-engine = create_engine(settings.database_url, pool_pre_ping=True)
-Session = sessionmaker(bind=engine)
-
-class Base(DeclarativeBase):
-    pass
+from .database import Base, Session, settings
+from .cms import router as cms_router, seed_content
 
 class Inquiry(Base):
     __tablename__ = 'inquiries'
@@ -61,10 +49,13 @@ class InquiryInput(BaseModel):
 async def lifespan(app):
     if settings.environment == 'production' and not settings.internal_api_key:
         raise RuntimeError('INTERNAL_API_KEY is required in production')
-    Base.metadata.create_all(engine)
+    Base.metadata.create_all(Session.kw["bind"])
+    if settings.cms_seed_on_start:
+        seed_content()
     yield
 
-app = FastAPI(title='ALEMAX inquiry API', lifespan=lifespan)
+app = FastAPI(title='ALEMAX API', lifespan=lifespan)
+app.include_router(cms_router)
 recent = defaultdict(deque)
 
 @app.get('/health')

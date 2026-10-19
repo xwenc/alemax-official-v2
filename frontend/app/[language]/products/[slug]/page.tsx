@@ -1,5 +1,6 @@
+import { getCatalog, missingTranslation } from "@/lib/catalog";
+import TranslationUnavailable from "@/components/pages/TranslationUnavailable";
 import { notFound } from "next/navigation";
-import legacy from "@/lib/legacy-content.json";
 import { Suspense } from "react";
 import Website from "@/components/Website";
 import ProductDetailPage from "@/components/pages/ProductDetailPage";
@@ -11,11 +12,18 @@ export async function generateMetadata({ params, searchParams }: PageProps) {
 export default async function Page({ params }: PageProps) {
   const { language, slug } = await params;
   const locale = pageLocale(language);
-  if (!legacy[locale].products.some((p) => p.slug === slug)) notFound();
+  const data = await getCatalog(locale);
+  if (missingTranslation(data, "product", slug!))
+    return (
+      <Website initialLocale={locale} catalogData={data}>
+        <TranslationUnavailable path={`products/${slug}`} />
+      </Website>
+    );
+  if (!data.products.some((p) => p.slug === slug)) notFound();
   return (
-    <Website initialLocale={locale}>
+    <Website initialLocale={locale} catalogData={data}>
       <Suspense>
-        <ProductDetailPage locale={locale} slug={slug!} />
+        <ProductDetailPage locale={locale} catalog={data} slug={slug!} />
       </Suspense>
     </Website>
   );
