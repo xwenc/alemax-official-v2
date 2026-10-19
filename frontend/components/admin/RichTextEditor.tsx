@@ -4,17 +4,30 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Underline from "@tiptap/extension-underline";
-import { safeRichLink, type RichTextDocument } from "@/lib/rich-text";
+import Image from "@tiptap/extension-image";
+import {
+  safeRichLink,
+  safeRichImage,
+  type RichTextDocument,
+} from "@/lib/rich-text";
 
 export default function RichTextEditor({
   value,
   onChange,
   disabled = false,
+  onImageBusyChange,
 }: {
   value: RichTextDocument;
   onChange: (document: RichTextDocument) => void;
   disabled?: boolean;
+  onImageBusyChange?: (busy: boolean) => void;
 }) {
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [imageOpen, setImageOpen] = useState(false);
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageAlt, setImageAlt] = useState("");
+  const [imageError, setImageError] = useState("");
+  const [uploading, setUploading] = useState(false);
   const change = useRef(onChange);
   change.current = onChange;
   const [linkOpen, setLinkOpen] = useState(false),
@@ -37,6 +50,17 @@ export default function RichTextEditor({
         isAllowedUri: (url) => safeRichLink(url),
       }),
       Underline,
+      Image.extend({
+        parseHTML() {
+          return [
+            {
+              tag: "img[src]",
+              getAttrs: (element) =>
+                safeRichImage(element.getAttribute("src") || "") ? null : false,
+            },
+          ];
+        },
+      }).configure({ allowBase64: false }),
     ],
     content: value,
     editable: !disabled,
@@ -75,6 +99,62 @@ export default function RichTextEditor({
     else editor?.chain().focus().extendMarkRange("link").unsetLink().run();
     setLinkOpen(false);
     setError("");
+  }
+  function insertImage(src = imageUrl) {
+    const url = src.trim();
+    if (!safeRichImage(url)) {
+      setImageError(
+        "Use an HTTPS image URL or a local /images/ or /media/ path.",
+      );
+      return;
+    }
+    if (!editor || editor.isDestroyed) return;
+    editor
+      .chain()
+      .focus()
+      .setImage({ src: url, alt: imageAlt.trim(), title: "" })
+      .run();
+    setImageOpen(false);
+    setImageError("");
+  }
+  async function uploadImage(file?: File) {
+    if (!file || uploading || disabled) return;
+    setImageError("");
+    if (
+      file.size > 10 * 1024 * 1024 ||
+      !["image/png", "image/jpeg", "image/webp"].includes(file.type)
+    ) {
+      setImageError("Choose a PNG, JPEG or WebP image of 10 MB or less.");
+      return;
+    }
+    setUploading(true);
+    onImageBusyChange?.(true);
+    try {
+      const response = await fetch("/api/admin/media", {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(
+          typeof data.detail === "string"
+            ? data.detail
+            : "Image upload failed.",
+        );
+      if (typeof data.url !== "string" || !safeRichImage(data.url))
+        throw new Error("Invalid uploaded image URL.");
+      insertImage(data.url);
+    } catch (error) {
+      setImageError(
+        error instanceof Error
+          ? error.message
+          : "Image upload failed. Try again.",
+      );
+    } finally {
+      setUploading(false);
+      onImageBusyChange?.(false);
+    }
   }
   const actions = editor
     ? [
@@ -195,6 +275,31 @@ export default function RichTextEditor({
         </button>
         <button
           type="button"
+          disabled={!editor || disabled || uploading}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
+            const attrs = editor?.isActive("image")
+              ? editor.getAttributes("image")
+              : {};
+            setImageUrl(String(attrs.src || ""));
+            setImageAlt(String(attrs.alt || ""));
+            setImageError("");
+            setImageOpen(!imageOpen);
+            setLinkOpen(false);
+          }}
+        >
+          Image
+        </button>
+        <button
+          type="button"
+          disabled={!editor || disabled || !editor.isActive("image")}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => editor?.chain().focus().deleteSelection().run()}
+        >
+          Remove image
+        </button>
+        <button
+          type="button"
           aria-label="Clear formatting"
           disabled={!editor || disabled}
           onMouseDown={(e) => e.preventDefault()}
@@ -254,6 +359,72 @@ export default function RichTextEditor({
             Cancel
           </button>
           {error && <p role="alert">{error}</p>}
+        </div>
+      )}
+      {imageOpen && (
+        <div className="admin-rich-image-panel">
+          <label>
+            Image description (alt text)
+            <input
+              value={imageAlt}
+              maxLength={500}
+              disabled={disabled || uploading}
+              onChange={(e) => setImageAlt(e.target.value)}
+              placeholder="Describe the image; leave empty for a decorative image"
+            />
+          </label>
+          <label>
+            Image URL
+            <input
+              value={imageUrl}
+              disabled={disabled || uploading}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://… or /media/…"
+            />
+          </label>
+          <div className="admin-toolbar">
+            <input
+              ref={fileInput}
+              type="file"
+              hidden
+              accept="image/png,image/jpeg,image/webp"
+              disabled={disabled || uploading}
+              onChange={(e) => {
+                void uploadImage(e.target.files?.[0]);
+                e.target.value = "";
+              }}
+            />
+            <button
+              type="button"
+              disabled={disabled || uploading}
+              onClick={() => fileInput.current?.click()}
+            >
+              {uploading ? "Uploading…" : "Upload & insert image"}
+            </button>
+            <button
+              type="button"
+              disabled={disabled || uploading || !imageUrl.trim()}
+              onClick={() => insertImage()}
+            >
+              Insert image URL
+            </button>
+            <button
+              type="button"
+              disabled={uploading}
+              onClick={() => setImageOpen(false)}
+            >
+              Cancel
+            </button>
+          </div>
+          <p className="admin-hint">
+            PNG, JPEG or WebP · max 10 MB. Inserts at the cursor. Save the
+            draft, then publish to update the live page.
+          </p>
+          {imageError && (
+            <p className="admin-error" role="alert">
+              {imageError}
+            </p>
+          )}
         </div>
       )}
       <EditorContent editor={editor} />

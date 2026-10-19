@@ -30,7 +30,10 @@ export default function useContentEditor(
     [configured, setConfigured] = useState(true),
     [loaded, setLoaded] = useState(false);
   const dirtyRef = useRef(false);
-  function setDirty(value: boolean) { dirtyRef.current = value; setDirtyState(value); }
+  function setDirty(value: boolean) {
+    dirtyRef.current = value;
+    setDirtyState(value);
+  }
   const current = items.find((item) => item.id === selected);
   async function load() {
     const data = await adminRequest<ContentLibrary>("content");
@@ -40,7 +43,9 @@ export default function useContentEditor(
     setLoaded(true);
   }
   useEffect(() => {
-    load().catch((e) => setError(e.message)).finally(() => setLoaded(true));
+    load()
+      .catch((e) => setError(e.message))
+      .finally(() => setLoaded(true));
   }, []);
   useEffect(() => {
     if (!current || creating) return;
@@ -151,6 +156,7 @@ export default function useContentEditor(
     current,
     creating,
     busy,
+    setBusy,
     dirty,
     kind,
     slug,

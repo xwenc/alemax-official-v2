@@ -33,6 +33,7 @@ const env = {
 
 const port = env.WEB_PORT || "3100";
 Object.assign(env, {
+  VISIT_STATS_ENABLED: env.VISIT_STATS_ENABLED || "true",
   NODE_ENV: "development",
   ENVIRONMENT: "development",
   SITE_ORIGINS: `http://localhost:${port},http://127.0.0.1:${port}`,

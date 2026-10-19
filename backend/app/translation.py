@@ -41,6 +41,10 @@ def translate_fields(fields):
     refs = [(result, key) for key in ['title','summary','seo_title','seo_description','image_alt'] if result.get(key)]
     if result.get('body'):
         def collect(node):
+            if node.get('type') == 'image':
+                for key in ['alt', 'title']:
+                    if node.get('attrs', {}).get(key):
+                        refs.append((node['attrs'], key))
             if node.get('type') == 'text' and node.get('text'):
                 refs.append((node, 'text'))
             for child in node.get('content', []):

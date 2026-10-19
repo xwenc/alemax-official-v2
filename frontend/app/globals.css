@@ -229,14 +229,24 @@ nav {
   box-shadow: 0 8px 20px #0002;
   display: none;
 }
-.submenu button {
+.nav-item .submenu > button,
+.nav-item .submenu > a {
   display: block;
   text-align: left;
   width: 100%;
   padding: 12px;
   font-size: 12px;
+  font-family: inherit;
+  font-weight: inherit;
+  line-height: 1.5;
+  letter-spacing: inherit;
 }
-.submenu button:hover {
+.nav-item .submenu > a {
+  text-transform: capitalize;
+}
+.submenu button:hover,
+.submenu > a:hover,
+.submenu > a:focus-visible {
   background: var(--mist);
   color: var(--forest);
 }
@@ -1443,7 +1453,7 @@ dialog::backdrop {
 
 .cookie-consent {
   position: fixed;
-  left: 24px;
+  right: 24px;
   bottom: 72px;
   z-index: 150;
   width: min(600px, calc(100vw - 48px));
@@ -1493,9 +1503,11 @@ dialog::backdrop {
 .cookie-settings {
   position: fixed;
   bottom: 16px;
-  left: 24px;
+  right: 24px;
   z-index: 150;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   color: #171717;
   border: 1px solid #767b84;
   border-radius: 5px;
@@ -1507,21 +1519,27 @@ dialog::backdrop {
 }
 .cookie-consent :focus-visible, .cookie-settings:focus-visible { outline: 3px solid #171717; outline-offset: 4px; }
 @media (max-width: 600px) {
-  .cookie-consent { left: 12px; width: calc(100vw - 24px); padding: 20px; }
-  .cookie-settings { left: 12px; }
+  .cookie-consent { right: 12px; width: calc(100vw - 24px); padding: 20px; }
+  .cookie-settings { right: 12px; }
   .cookie-consent-actions button { min-width: 0; flex: 1; }
 }
 
-.footer-cookie-settings {
-  display: block;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  padding: 0;
-  margin: 0 0 12px;
-  border: 0;
-  background: none;
-  cursor: pointer;
-}
-.footer-cookie-settings:hover { text-decoration: underline; }
 .cookie-settings[hidden] { display: none; }
+
+.rich-text-content img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 24px auto;
+  border-radius: 6px;
+}
+
+.catalog-card.update-card { padding: 0; overflow: hidden; }
+.article-thumbnail { width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: var(--mist); }
+.article-thumbnail img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 0.25s; }
+.article-thumbnail img[data-placeholder] { object-fit: contain; padding: 32px; }
+.update-card:hover .article-thumbnail img, .update:hover .article-thumbnail img { transform: scale(1.03); }
+.update-card-copy { padding: 28px; width: 100%; }
+.update-card-copy p { color: #757575; margin-top: 14px; overflow-wrap: anywhere; }
+.update > .article-thumbnail { margin-bottom: 18px; }
+@media (max-width: 600px) { .update-card-copy { padding: 24px; } }

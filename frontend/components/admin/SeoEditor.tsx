@@ -1,14 +1,37 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { adminRequest } from "./admin-content";
+import type { GlobalSeoSettings } from "@/lib/cms-types";
 import type { CmsFields } from "@/lib/cms-types";
 
 export default function SeoEditor({
   fields,
   onChange,
+  locale = "en",
 }: {
   fields: CmsFields;
+  locale?: "en" | "es";
   onChange: (value: CmsFields) => void;
 }) {
+  const [suffix, setSuffix] = useState("ALEMAX Global Ingredients");
+  const [suffixError, setSuffixError] = useState(false);
+  useEffect(() => {
+    let active = true;
+    adminRequest<GlobalSeoSettings>("settings/seo")
+      .then((data) => {
+        if (active) {
+          setSuffix(data.title_suffix[locale]);
+          setSuffixError(false);
+        }
+      })
+      .catch(() => {
+        if (active) setSuffixError(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [locale]);
   const title = fields.seo_title || fields.title || "Page title";
   const description = fields.seo_description || fields.summary;
   return (
@@ -51,7 +74,18 @@ export default function SeoEditor({
         <small>
           Search preview · Search engines may choose different text.
         </small>
-        <h4>{title} | ALEMAX</h4>
+        <h4>
+          {title} | {suffix}
+        </h4>
+        <small>
+          Global suffix: edit in{" "}
+          <a href="/admin/settings">Administrator → Global SEO</a>.
+        </small>
+        {suffixError && (
+          <p role="alert">
+            Unable to load global SEO settings. Preview uses the default suffix.
+          </p>
+        )}
         <p>
           {description || "Add a description to preview your search snippet."}
         </p>

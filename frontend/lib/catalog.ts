@@ -23,6 +23,7 @@ export const getCatalog = cache(
       .map((i) => ({ _id: i.id, name: i.fields.title, slug: i.slug }));
     return {
       cms: true,
+      seoTitleSuffix: data.seo?.title_suffix,
       categories,
       products: data.items
         .filter((i) => i.kind === "product")

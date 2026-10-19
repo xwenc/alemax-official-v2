@@ -3,7 +3,9 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import { copy, Locale } from "@/lib/content";
 import InquiryForm from "./InquiryForm";
 import CookieConsent from "./CookieConsent";
+import VisitTracker from "./VisitTracker";
 import ProductImage from "./ProductImage";
+import ArticleThumbnail from "./ArticleThumbnail";
 import type { SiteCatalog } from "@/lib/catalog-types";
 const image = (file: string) => `/images/${file}`;
 export default function Website({
@@ -119,6 +121,7 @@ export default function Website({
   );
   return (
     <>
+      <VisitTracker />
       <CookieConsent locale={locale} />
       <a className="skip-link" href="#main">
         {locale === "en" ? "Skip to content" : "Ir al contenido"}
@@ -200,7 +203,7 @@ export default function Website({
                   <div className="submenu">
                     {catalog.categories.map((p) => (
                       <a key={p.slug} href={`${home}/products?cat=${p.slug}`}>
-                        {p.name}
+                        {p.name.toLocaleLowerCase(locale)}
                       </a>
                     ))}
                   </div>
@@ -393,17 +396,7 @@ export default function Website({
                       className="update"
                       key={article.id}
                     >
-                      {article.shared.images?.[0] && (
-                        <div className="update-image">
-                          <img
-                            src={article.shared.images[0]}
-                            loading="lazy"
-                            alt={
-                              article.fields.image_alt || article.fields.title
-                            }
-                          />
-                        </div>
-                      )}
+                      <ArticleThumbnail article={article} />
                       <h3>
                         {article.fields.title}
                         <span>↗</span>
@@ -452,18 +445,9 @@ export default function Website({
             <a href={`${home}/about`}>{t.nav[3]}</a>
             <a href={`${home}/activity`}>{t.nav[4]}</a>
             <a href={`${home}/privacy`}>{t.policy}</a>
-            <a href={`${home}/cookie`}>
+            <a id="footer-cookie-policy" href={`${home}/cookie`}>
               {locale === "en" ? "Cookie policy" : "Política de cookies"}
             </a>
-            <button
-              id="footer-cookie-settings"
-              className="footer-cookie-settings"
-              onClick={() =>
-                window.dispatchEvent(new Event("alemax:open-cookie-settings"))
-              }
-            >
-              {locale === "en" ? "Cookie settings" : "Configuración de cookies"}
-            </button>
             <a href={`${home}/terms`} target="_blank" rel="noreferrer">
               {locale === "en" ? "Legal notice" : "Aviso legal"}
             </a>

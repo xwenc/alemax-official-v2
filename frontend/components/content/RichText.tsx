@@ -1,5 +1,9 @@
 import type { ReactNode } from "react";
-import { safeRichLink, type RichTextNode } from "@/lib/rich-text";
+import {
+  safeRichLink,
+  safeRichImage,
+  type RichTextNode,
+} from "@/lib/rich-text";
 export default function RichText({ document }: { document: RichTextNode }) {
   function render(node: RichTextNode, key: number): ReactNode {
     const children = node.content?.map(render);
@@ -20,6 +24,16 @@ export default function RichText({ document }: { document: RichTextNode }) {
       return <span key={key}>{text}</span>;
     }
     switch (node.type) {
+      case "image":
+        return safeRichImage(node.attrs?.src || "") ? (
+          <img
+            key={key}
+            src={node.attrs!.src}
+            alt={node.attrs?.alt || ""}
+            title={node.attrs?.title || undefined}
+            loading="lazy"
+          />
+        ) : null;
       case "doc":
         return (
           <div key={key} className="rich-text-content">

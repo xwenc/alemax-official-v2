@@ -2,12 +2,56 @@ export type RichTextMark = { type: string; attrs?: { href?: string } };
 export type RichTextNode = {
   type: string;
   text?: string;
-  attrs?: { level?: number; start?: number };
+  attrs?: {
+    level?: number;
+    start?: number;
+    src?: string;
+    alt?: string | null;
+    title?: string | null;
+  };
   marks?: RichTextMark[];
   content?: RichTextNode[];
 };
 export type RichTextDocument = RichTextNode & { type: "doc" };
 export type PlainBlock = { tag: "p" | "h2" | "h3" | "li"; text: string };
+export function contentThumbnail(
+  images: string[],
+  body: RichTextNode | null | undefined,
+  alt: string,
+): { src: string; alt: string } | null {
+  const cover = images.find(safeRichImage);
+  if (cover) return { src: cover, alt };
+  function find(node: RichTextNode): { src: string; alt: string } | null {
+    if (node.type === "image" && safeRichImage(node.attrs?.src || ""))
+      return { src: node.attrs!.src!, alt: node.attrs?.alt || alt };
+    for (const child of node.content || []) {
+      const image = find(child);
+      if (image) return image;
+    }
+    return null;
+  }
+  return body ? find(body) : null;
+}
+export function safeRichImage(src: string): boolean {
+  if (!src || src.length > 2000 || /[\u0000-\u0020\u007f\\]/.test(src))
+    return false;
+  if (
+    (src.startsWith("/images/") || src.startsWith("/media/")) &&
+    !src.includes("..")
+  )
+    return true;
+  try {
+    const url = new URL(src);
+    return (
+      url.protocol === "https:" &&
+      !!url.hostname &&
+      !url.username &&
+      !url.password
+    );
+  } catch {
+    return false;
+  }
+}
 export function safeRichLink(href: string): boolean {
   if (!href || /[\u0000-\u0020\u007f\\]/.test(href)) return false;
   if (href.startsWith("/") && !href.startsWith("//")) return true;
@@ -35,12 +79,10 @@ export function blocksToDocument(
     if (block.tag === "li") {
       if (content.at(-1)?.type !== "bulletList")
         content.push({ type: "bulletList", content: [] });
-      content
-        .at(-1)!
-        .content!.push({
-          type: "listItem",
-          content: [{ type: "paragraph", content: inline }],
-        });
+      content.at(-1)!.content!.push({
+        type: "listItem",
+        content: [{ type: "paragraph", content: inline }],
+      });
     } else
       content.push({
         type: block.tag.startsWith("h") ? "heading" : "paragraph",

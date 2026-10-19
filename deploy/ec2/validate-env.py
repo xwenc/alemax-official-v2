@@ -18,6 +18,8 @@ for key, minimum in [('ADMIN_PASSWORD', 12), ('ADMIN_SESSION_SECRET', 32), ('INT
 for key in ['MYSQL_PASSWORD', 'MYSQL_ROOT_PASSWORD']:
     if not re.fullmatch(r'[a-fA-F0-9]{32,}', db.get(key) or ''):
         errors.append(f'{key}: use an independently generated hex secret of at least 32 characters')
+if web.get('VISIT_HASH_SECRET') and len(web['VISIT_HASH_SECRET']) < 32:
+    errors.append('VISIT_HASH_SECRET: use at least 32 characters or leave empty')
 if web.get('ENVIRONMENT') != 'production':
     errors.append('ENVIRONMENT must be production')
 origins = (web.get('SITE_ORIGINS') or '').split(',')

@@ -2,6 +2,7 @@ import type { SiteCatalog } from "@/lib/catalog-types";
 import { type Locale } from "@/lib/content";
 import PageHeading from "./PageHeading";
 import ContentBody from "./ContentBody";
+import CookiePreferencesButton from "../CookiePreferencesButton";
 export default function CookiePage({
   locale,
   catalog,
@@ -22,9 +23,10 @@ export default function CookiePage({
           </h2>
           <p>
             {locale === "en"
-              ? "ALEMAX Global Ingredients SL currently uses no analytics, advertising or personalisation cookies. The following first-party cookies support necessary functions. Use the Cookie settings button on any page to change or withdraw your optional-cookie choice."
-              : "ALEMAX Global Ingredients SL no utiliza actualmente cookies de análisis, publicidad ni personalización. Las siguientes cookies propias permiten funciones necesarias. Utiliza el botón Configuración de cookies de cualquier página para cambiar o retirar tu elección sobre cookies opcionales."}
+              ? "ALEMAX Global Ingredients SL currently uses no analytics, advertising or personalisation cookies. The following first-party cookies support necessary functions. Use the button below to change or withdraw your optional-cookie choice."
+              : "ALEMAX Global Ingredients SL no utiliza actualmente cookies de análisis, publicidad ni personalización. Las siguientes cookies propias permiten funciones necesarias. Utiliza el botón de abajo para cambiar o retirar tu elección sobre cookies opcionales."}
           </p>
+          <CookiePreferencesButton locale={locale} />
           <ul>
             <li>
               <strong>alemax_cookie_choice</strong>:{" "}

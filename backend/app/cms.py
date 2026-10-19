@@ -44,6 +44,30 @@ class TranslationJob(Base):
     created_at: Mapped[int] = mapped_column(BigInteger)
     claimed_at: Mapped[int] = mapped_column(Integer, default=0)
 
+DEFAULT_SEO_SUFFIX = {'en': 'ALEMAX Global Ingredients', 'es': 'ALEMAX Global Ingredients'}
+
+class SiteSeo(Base):
+    __tablename__ = 'cms_site_seo'
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    title_suffix: Mapped[dict] = mapped_column(JSON)
+    revision: Mapped[int] = mapped_column(Integer, default=1)
+    __mapper_args__ = {'version_id_col': revision}
+
+class SeoInput(BaseModel):
+    title_suffix: dict[Literal['en', 'es'], str]
+    revision: int = Field(ge=0)
+
+    @field_validator('title_suffix')
+    @classmethod
+    def validate_suffix(cls, value):
+        if set(value) != {'en', 'es'} or any(not v.strip() or len(v) > 200 for v in value.values()):
+            raise ValueError('Provide an English and Spanish suffix of 1–200 characters')
+        return {key: text.strip() for key, text in value.items()}
+
+def site_seo(db):
+    row = db.get(SiteSeo, 1)
+    return {'title_suffix': row.title_suffix if row else DEFAULT_SEO_SUFFIX, 'revision': row.revision if row else 0}
+
 
 def now():
     return int(datetime.now(timezone.utc).timestamp())
@@ -53,6 +77,25 @@ def authorize(request: Request):
         raise HTTPException(403, 'Invalid internal key')
 
 router = APIRouter(prefix='/cms', dependencies=[Depends(authorize)])
+
+@router.get('/settings/seo')
+def read_site_seo():
+    with Session() as db:
+        return site_seo(db)
+
+@router.put('/settings/seo')
+def save_site_seo(payload: SeoInput):
+    with Session() as db:
+        row = db.get(SiteSeo, 1)
+        if payload.revision != (row.revision if row else 0):
+            raise HTTPException(409, 'Global SEO settings changed. Reload before saving.')
+        if row:
+            row.title_suffix = payload.title_suffix
+            row.revision += 1
+        else:
+            db.add(SiteSeo(id=1, title_suffix=payload.title_suffix, revision=1))
+        commit(db)
+        return site_seo(db)
 Kind = Literal['product', 'category', 'production-base', 'page', 'article']
 Locale = Literal['en', 'es']
 
@@ -276,7 +319,7 @@ def catalog(locale: Locale):
         localized.sort(key=lambda x: (x['shared'].get('sort_order', 0), x['slug']))
         # Only an English link is exposed for unavailable Spanish versions, never an English body.
         unavailable = [{'kind': row.kind, 'slug': row.slug} for row in rows if locale == 'es' and 'en' in row.published and 'es' not in row.published]
-        return {'items': localized, 'unavailable': unavailable}
+        return {'items': localized, 'unavailable': unavailable, 'seo': {'title_suffix': site_seo(db)['title_suffix'][locale]}}
 
 @router.post('/media', status_code=201)
 async def upload(request: Request):

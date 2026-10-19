@@ -3,7 +3,7 @@ import { isAdmin } from "@/lib/admin-session";
 import { internalApi } from "@/lib/internal-api";
 export const runtime = "nodejs";
 const allowed =
-  /^(content(?:\/[a-f0-9-]{36}(?:\/(?:spanish|translate|review|publish|unpublish))?)?|media)$/;
+  /^(content(?:\/[a-f0-9-]{36}(?:\/(?:spanish|translate|review|publish|unpublish))?)?|media|settings\/seo|analytics\/visits)$/;
 async function handle(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> },

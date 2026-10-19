@@ -72,6 +72,10 @@ export default function EnglishContentForm({
         </p>
       )}
       <ContentFieldEditor
+        onImageBusyChange={(busy) => {
+          editor.setBusy(busy);
+          if (busy) editor.setDirty(true);
+        }}
         key={current?.id || "new"}
         fields={en}
         onChange={(value) => {

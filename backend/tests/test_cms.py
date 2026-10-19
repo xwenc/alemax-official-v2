@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import delete, select
 from app.main import app
 from app.database import Session, settings
-from app.cms import Content, TranslationJob, seed_content
+from app.cms import Content, TranslationJob, SiteSeo, seed_content
 from app import translation
 
 HEADERS = {'X-Internal-Key':'test-service-key'}
@@ -13,7 +13,7 @@ FIELDS = {'title':'Calcium Stearate','summary':'ALEMAX E470a with 25 kg bags, CA
 def client():
     with TestClient(app) as c:
         with Session() as db:
-            db.execute(delete(TranslationJob)); db.execute(delete(Content)); db.commit()
+            db.execute(delete(TranslationJob)); db.execute(delete(Content)); db.execute(delete(SiteSeo)); db.commit()
         yield c
 
 def create(c):
@@ -252,3 +252,85 @@ def test_seo_copy_persists_by_locale_and_only_changes_live_after_publish(client,
     assert catalog(client, 'en')['items'][0]['fields']['seo_description'] == en['seo_description']
     row = mutate(client, response.json(), 'publish', locale='en').json()
     assert catalog(client, 'en')['items'][0]['fields']['seo_description'] == updated['seo_description']
+
+
+def test_article_inline_image_upload_save_publish(client, tmp_path, monkeypatch):
+    monkeypatch.setattr(settings, 'uploads_dir', str(tmp_path))
+    r = client.post('/cms/media', headers=HEADERS, content=b'\x89PNG\r\n\x1a\ninline-image')
+    assert r.status_code == 201
+    src = r.json()['url']
+    body = {'type': 'doc', 'content': [
+        {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'Before image'}]},
+        {'type': 'image', 'attrs': {'src': src, 'alt': 'Factory equipment', 'title': ''}},
+        {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'After image'}]}]}
+    r = client.post('/cms/content', headers=HEADERS, json={'kind': 'article', 'slug': 'inline-image', 'fields': {**FIELDS, 'body': body}})
+    assert r.status_code == 201, r.text
+    row = r.json()
+    saved = next(i for i in client.get('/cms/content', headers=HEADERS).json()['items'] if i['id'] == row['id'])
+    assert saved['translations']['en']['fields']['body'] == body
+    assert not catalog(client, 'en')['items']
+    assert mutate(client, row, 'publish', locale='en').status_code == 200
+    assert catalog(client, 'en')['items'][0]['fields']['body'] == body
+    assert client.get('/cms' + src, headers=HEADERS).status_code == 200
+
+
+@pytest.mark.parametrize('src', ['javascript:alert(1)', 'data:image/png;base64,abc', '//example.com/a.png', 'http://example.com/a.png', '/admin/a', '/media/../secret', 'https://user:pass@example.com/a.jpg'])
+def test_inline_image_rejects_unsafe_source(client, src):
+    row = create(client)
+    body = {'type': 'doc', 'content': [{'type': 'image', 'attrs': {'src': src}}]}
+    assert update(client, row, {**FIELDS, 'body': body}).status_code == 422
+
+
+def test_inline_image_attributes_and_nesting(client):
+    row = create(client)
+    image = {'type': 'image', 'attrs': {'src': '/images/plant.jpg', 'alt': 'Plant', 'title': '', 'onerror': 'alert(1)'}}
+    r = update(client, row, {**FIELDS, 'body': {'type': 'doc', 'content': [image]}})
+    assert r.status_code == 200
+    assert 'onerror' not in r.json()['translations']['en']['fields']['body']['content'][0]['attrs']
+    row = r.json()
+    for content in [[{**image, 'content': [{'type': 'paragraph'}]}], [{'type': 'paragraph', 'content': [image]}]]:
+        assert update(client, row, {**FIELDS, 'body': {'type': 'doc', 'content': content}}).status_code == 422
+
+
+def test_translation_keeps_inline_image_url_and_translates_alt(client, monkeypatch):
+    import json
+    monkeypatch.setattr(settings, 'deepl_api_key', 'test-key')
+    original = httpx.Client
+    def provider(request):
+        payload = json.loads(request.content)
+        assert all('/media/' not in text for text in payload['text'])
+        return httpx.Response(200, json={'translations': [{'text': text.replace('Factory equipment', 'Equipos de fábrica')} for text in payload['text']]})
+    monkeypatch.setattr(translation.httpx, 'Client', lambda **kwargs: original(transport=httpx.MockTransport(provider), **kwargs))
+    body = {'type': 'doc', 'content': [{'type': 'image', 'attrs': {'src': '/media/' + 'a' * 64 + '.jpg', 'alt': 'Factory equipment', 'title': ''}}]}
+    result = translation.translate_fields({**FIELDS, 'body': body})
+    assert result['body']['content'][0]['attrs']['src'] == body['content'][0]['attrs']['src']
+    assert result['body']['content'][0]['attrs']['alt'] == 'Equipos de fábrica'
+
+
+def test_global_seo_saved_in_database_and_localized_for_all_catalogs(client):
+    assert client.get('/cms/settings/seo').status_code == 403
+    assert client.put('/cms/settings/seo', json={}).status_code == 403
+    initial = client.get('/cms/settings/seo', headers=HEADERS).json()
+    assert initial['revision'] == 0
+    row = create(client)
+    suffix = {'en': 'ALEMAX | Global ingredients supplier', 'es': 'ALEMAX | Proveedor de ingredientes'}
+    response = client.put('/cms/settings/seo', headers=HEADERS, json={'title_suffix': suffix, 'revision': 0})
+    assert response.status_code == 200, response.text
+    saved = response.json()
+    assert saved['revision'] == 1
+    assert client.get('/cms/settings/seo', headers=HEADERS).json() == saved
+    with Session() as db:
+        assert db.get(SiteSeo, 1).title_suffix == suffix
+        assert db.get(Content, row['id']).version == row['version']
+    assert catalog(client, 'en')['seo']['title_suffix'] == suffix['en']
+    assert catalog(client, 'es')['seo']['title_suffix'] == suffix['es']
+    assert client.put('/cms/settings/seo', headers=HEADERS, json={'title_suffix': suffix, 'revision': 0}).status_code == 409
+    response = client.put('/cms/settings/seo', headers=HEADERS, json={'title_suffix': {**suffix, 'en': 'New global suffix'}, 'revision': 1})
+    assert response.status_code == 200
+    assert response.json()['revision'] == 2
+    assert catalog(client, 'en')['seo']['title_suffix'] == 'New global suffix'
+
+
+@pytest.mark.parametrize('suffix', [{}, {'en': 'English'}, {'en': '', 'es': 'Español'}, {'en': '   ', 'es': 'Spanish'}, {'en': 'x' * 201, 'es': 'Spanish'}])
+def test_global_seo_rejects_invalid_suffixes(client, suffix):
+    assert client.put('/cms/settings/seo', headers=HEADERS, json={'title_suffix': suffix, 'revision': 0}).status_code == 422

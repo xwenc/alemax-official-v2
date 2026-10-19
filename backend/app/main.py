@@ -14,6 +14,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from .database import Base, Session, settings
 from .cms import router as cms_router, seed_content
+from .analytics import router as analytics_router
 
 class Inquiry(Base):
     __tablename__ = 'inquiries'
@@ -56,6 +57,7 @@ async def lifespan(app):
 
 app = FastAPI(title='ALEMAX API', lifespan=lifespan)
 app.include_router(cms_router)
+app.include_router(analytics_router)
 recent = defaultdict(deque)
 
 @app.get('/health')

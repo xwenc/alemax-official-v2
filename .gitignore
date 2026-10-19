@@ -13,3 +13,4 @@ backend/.local/
 backend/uploads/
 backups/
 .deploy.lock
+.migration-counts.sql

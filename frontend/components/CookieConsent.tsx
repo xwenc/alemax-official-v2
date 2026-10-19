@@ -11,12 +11,12 @@ import {
 const copy = {
   en: {
     title: "We value your privacy.",
-    text: "ALEMAX Global Ingredients SL uses essential cookies to keep this website secure and remember your privacy choice. We do not currently use analytics, advertising or personalisation cookies. Optional cookies require your prior consent.",
+    text: "ALEMAX Global Ingredients SL uses essential cookies to keep this website secure and remember your privacy choice. We do not currently use analytics, advertising or personalisation cookies. Optional cookies require your prior consent. We also measure daily visits on our server without analytics cookies; details are in our Privacy Policy.",
     more: "For more information, see our",
     privacy: "Privacy Policy",
     and: "and",
     cookies: "Cookie Policy",
-    note: "Accept and Reject record your choice for optional cookies for 180 days. Essential functionality remains available with either choice. You can change or withdraw your choice at any time using Cookie settings.",
+    note: "Accept and Reject record your choice for optional cookies for 180 days. Essential functionality remains available with either choice. You can change or withdraw your choice at any time on the Cookie Policy page.",
     reject: "Reject",
     accept: "Accept",
     settings: "Cookie settings",
@@ -24,12 +24,12 @@ const copy = {
   },
   es: {
     title: "Valoramos tu privacidad.",
-    text: "ALEMAX Global Ingredients SL utiliza cookies necesarias para proteger este sitio y recordar tu elección de privacidad. Actualmente no utilizamos cookies de análisis, publicidad ni personalización. Las cookies opcionales requieren tu consentimiento previo.",
+    text: "ALEMAX Global Ingredients SL utiliza cookies necesarias para proteger este sitio y recordar tu elección de privacidad. Actualmente no utilizamos cookies de análisis, publicidad ni personalización. Las cookies opcionales requieren tu consentimiento previo. También medimos las visitas diarias en el servidor sin cookies de análisis; consulta nuestra Política de privacidad.",
     more: "Para más información, consulta nuestra",
     privacy: "Política de privacidad",
     and: "y",
     cookies: "Política de cookies",
-    note: "Aceptar y Rechazar guardan tu elección sobre cookies opcionales durante 180 días. Las funciones necesarias siguen disponibles con ambas opciones. Puedes cambiar o retirar tu elección en cualquier momento desde Configuración de cookies.",
+    note: "Aceptar y Rechazar guardan tu elección sobre cookies opcionales durante 180 días. Las funciones necesarias siguen disponibles con ambas opciones. Puedes cambiar o retirar tu elección en cualquier momento en la página Política de cookies.",
     reject: "Rechazar",
     accept: "Aceptar",
     settings: "Configuración de cookies",
@@ -73,7 +73,7 @@ export default function CookieConsent({ locale }: { locale: Locale }) {
     requestAnimationFrame(() => {
       const target =
         choice === "accepted"
-          ? document.getElementById("footer-cookie-settings")
+          ? document.getElementById("footer-cookie-policy")
           : settings.current;
       target?.focus({ preventScroll: true });
     });
@@ -116,7 +116,11 @@ export default function CookieConsent({ locale }: { locale: Locale }) {
           </p>
           <p className="cookie-consent-note">{t.note}</p>
           <div className="cookie-consent-actions">
-            <button className="cookie-reject" ref={reject} onClick={() => choose("rejected")}>
+            <button
+              className="cookie-reject"
+              ref={reject}
+              onClick={() => choose("rejected")}
+            >
               {t.reject}
             </button>
             <button onClick={() => choose("accepted")}>{t.accept}</button>

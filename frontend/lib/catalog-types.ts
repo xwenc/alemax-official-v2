@@ -24,6 +24,7 @@ export type SitePage = {
   fields?: CmsFields;
 };
 export type SiteCatalog = {
+  seoTitleSuffix?: string;
   categories: SiteCategory[];
   products: SiteProduct[];
   pages: SitePage[];

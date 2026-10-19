@@ -33,6 +33,11 @@ export default function SpanishEdition({
         <ContentPreview fields={en} shared={shared} />
       </details>
       <ContentFieldEditor
+        locale="es"
+        onImageBusyChange={(busy) => {
+          editor.setBusy(busy);
+          if (busy) editor.setDirty(true);
+        }}
         key={current?.id || "new"}
         fields={es}
         onChange={(value) => {

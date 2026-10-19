@@ -5,12 +5,16 @@ import SeoEditor from "./SeoEditor";
 import { blocksToDocument, documentToBlocks } from "@/lib/rich-text";
 export default function ContentFieldEditor({
   fields,
+  locale = "en",
   onChange,
   disabled,
+  onImageBusyChange,
 }: {
   fields: CmsFields;
+  locale?: "en" | "es";
   onChange: (value: CmsFields) => void;
   disabled: boolean;
+  onImageBusyChange?: (busy: boolean) => void;
 }) {
   const set = (key: keyof CmsFields, value: string) =>
     onChange({ ...fields, [key]: value });
@@ -38,13 +42,14 @@ export default function ContentFieldEditor({
         <h3>Body content</h3>
       </div>
       <RichTextEditor
+        onImageBusyChange={onImageBusyChange}
         value={fields.body || blocksToDocument(fields.blocks)}
         disabled={disabled}
         onChange={(body) =>
           onChange({ ...fields, body, blocks: documentToBlocks(body) })
         }
       />
-      <SeoEditor fields={fields} onChange={onChange} />
+      <SeoEditor locale={locale} fields={fields} onChange={onChange} />
       <details className="admin-seo">
         <summary>Image accessibility</summary>
         <label>

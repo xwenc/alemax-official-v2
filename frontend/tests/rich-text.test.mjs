@@ -84,3 +84,22 @@ test("plain fallback retains text through inline formatting and nested lists", (
     { tag: "li", text: "E470a" },
   ]);
 });
+
+test('image sources accept HTTPS and local media but reject executable and credential URLs', async () => {
+  const { safeRichImage } = await import('../lib/rich-text.ts');
+  for (const src of ['/media/' + 'a'.repeat(64) + '.jpg', '/images/plant.jpg', 'https://example.com/image.webp']) assert.equal(safeRichImage(src), true, src);
+  for (const src of ['data:image/png;base64,abc', 'javascript:alert(1)', '//example.com/a.jpg', 'http://example.com/a.jpg', '/media/../secret', 'https://user:pass@example.com/a.jpg', '/admin/a']) assert.equal(safeRichImage(src), false, src);
+});
+
+test('plain fallback ignores images and preserves adjacent text', () => {
+  const doc = {type: 'doc', content: [{type: 'paragraph', content: [{type: 'text', text: 'Before'}]}, {type: 'image', attrs: {src: '/images/plant.jpg'}}, {type: 'paragraph', content: [{type: 'text', text: 'After'}]}]};
+  assert.deepEqual(documentToBlocks(doc), [{tag: 'p', text: 'Before'}, {tag: 'p', text: 'After'}]);
+});
+
+test('article thumbnail prefers cover, then first safe body image, then no image', async () => {
+  const { contentThumbnail } = await import('../lib/rich-text.ts');
+  const body = {type:'doc',content:[{type:'image',attrs:{src:'javascript:alert(1)'}},{type:'image',attrs:{src:'/images/plant.jpg',alt:'Plant'}}]};
+  assert.deepEqual(contentThumbnail(['/images/hero.jpg'], body, 'Cover'), {src:'/images/hero.jpg',alt:'Cover'});
+  assert.deepEqual(contentThumbnail([], body, 'Fallback'), {src:'/images/plant.jpg',alt:'Plant'});
+  assert.equal(contentThumbnail([], {type:'doc',content:[{type:'paragraph'}]}, 'Fallback'), null);
+});

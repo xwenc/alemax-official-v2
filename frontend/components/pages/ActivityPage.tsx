@@ -3,6 +3,7 @@ import { copy, type Locale } from "@/lib/content";
 import ContentBody from "./ContentBody";
 import PageHeading from "./PageHeading";
 import { pageLabels } from "./content";
+import ArticleThumbnail from "../ArticleThumbnail";
 export default function ActivityPage({
   locale,
   catalog,
@@ -28,12 +29,15 @@ export default function ActivityPage({
           <div className="catalog-grid">
             {data.articles.map((article) => (
               <a
-                className="catalog-card"
+                className="catalog-card update-card"
                 key={article.id}
                 href={`/${locale}/activity/${article.slug}`}
               >
-                <h3>{article.fields.title}</h3>
-                <p>{article.fields.summary}</p>
+                <ArticleThumbnail article={article} />
+                <div className="update-card-copy">
+                  <h3>{article.fields.title}</h3>
+                  <p>{article.fields.summary}</p>
+                </div>
               </a>
             ))}
           </div>

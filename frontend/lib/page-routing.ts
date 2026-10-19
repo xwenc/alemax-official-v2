@@ -60,7 +60,7 @@ export async function pageMetadata(
   if (exists(other)) languages[otherLocale] = `/${otherLocale}/${path}`;
 
   return {
-    title: `${title} | ALEMAX`,
+    title: `${title} | ${data.seoTitleSuffix || "ALEMAX Global Ingredients"}`,
     description: fields?.seo_description || fields?.summary || undefined,
     ...(missing ? { robots: { index: false, follow: true } } : {}),
     alternates: {

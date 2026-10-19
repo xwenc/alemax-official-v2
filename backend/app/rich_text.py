@@ -3,7 +3,18 @@ import re
 from urllib.parse import urlsplit
 
 INLINE = {'text', 'hardBreak'}
-BLOCKS = {'paragraph', 'heading', 'bulletList', 'orderedList', 'blockquote', 'horizontalRule'}
+BLOCKS = {'paragraph', 'heading', 'bulletList', 'orderedList', 'blockquote', 'horizontalRule', 'image'}
+
+def safe_image(value):
+    if not isinstance(value, str) or not value or len(value) > 2000 or re.search(r'[\x00-\x20\x7f\\]', value):
+        return False
+    if value.startswith(('/images/', '/media/')) and '..' not in value:
+        return True
+    try:
+        url = urlsplit(value)
+        return url.scheme == 'https' and bool(url.hostname) and not url.username and not url.password
+    except ValueError:
+        return False
 
 def safe_link(value):
     if not isinstance(value, str) or not value or re.search(r'[\x00-\x20\x7f\\]', value):
@@ -60,7 +71,7 @@ def validate_document(document):
             raise ValueError('Invalid rich text content')
         children = [visit(child, depth + 1) for child in content]
         allowed = INLINE if kind in ['paragraph','heading'] else {'listItem'} if kind in ['bulletList','orderedList'] else BLOCKS
-        if kind in ['text','hardBreak','horizontalRule'] and children:
+        if kind in ['text','hardBreak','horizontalRule','image'] and children:
             raise ValueError('Leaf nodes cannot have children')
         if any(child['type'] not in allowed for child in children):
             raise ValueError('Invalid rich text nesting')
@@ -71,6 +82,16 @@ def validate_document(document):
         attrs = node.get('attrs') or {}
         if not isinstance(attrs, dict):
             raise ValueError('Invalid node attributes')
+        if kind == 'image':
+            if not safe_image(attrs.get('src')):
+                raise ValueError('Images must use HTTPS or a local /images/ or /media/ path')
+            image_attrs = {'src': attrs['src']}
+            for key in ['alt', 'title']:
+                value = attrs.get(key) or ''
+                if not isinstance(value, str) or len(value) > 500:
+                    raise ValueError('Image descriptions must be 500 characters or less')
+                image_attrs[key] = value
+            result['attrs'] = image_attrs
         if kind == 'heading':
             level = attrs.get('level', 2)
             if level not in [2,3]: raise ValueError('Use heading levels 2 or 3')

@@ -9,6 +9,7 @@ import {
   publishedDate,
 } from "./admin-content";
 import AdminIcon from "./AdminIcon";
+import VisitStats from "./VisitStats";
 export default function OverviewPage() {
   const { items, loading, error } = useContentLibrary();
   const review = items.filter((i) =>
@@ -38,19 +39,7 @@ export default function OverviewPage() {
           {error}
         </p>
       )}
-      <div className="admin-stats">
-        {[
-          [items.length, "Content items"],
-          [items.filter((i) => i.published.en).length, "English published"],
-          [items.filter((i) => i.published.es).length, "Spanish published"],
-          [review.length, "Need Spanish review"],
-        ].map(([count, label]) => (
-          <div key={label}>
-            <span>{label}</span>
-            <strong>{loading ? "—" : count}</strong>
-          </div>
-        ))}
-      </div>
+      <VisitStats />
       <div className="admin-overview-grid">
         <section className="admin-data-panel">
           <div className="admin-panel-heading">

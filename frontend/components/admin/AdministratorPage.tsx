@@ -1,3 +1,4 @@
+import GlobalSeoEditor from "./GlobalSeoEditor";
 export default function AdministratorPage({
   username,
   translationConfigured,
@@ -15,6 +16,7 @@ export default function AdministratorPage({
           </p>
         </div>
       </div>
+      <GlobalSeoEditor />
       <div className="admin-settings-grid">
         <section className="admin-data-panel">
           <div className="admin-panel-heading">

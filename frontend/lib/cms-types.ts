@@ -45,6 +45,11 @@ export type CmsPublishedItem = CmsSnapshot & {
   slug: string;
 };
 export type CmsPublished = {
+  seo?: { title_suffix: string };
   items: CmsPublishedItem[];
   unavailable: { kind: CmsKind; slug: string }[];
+};
+export type GlobalSeoSettings = {
+  title_suffix: Record<"en" | "es", string>;
+  revision: number;
 };

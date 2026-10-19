@@ -187,3 +187,15 @@ docker compose --env-file deploy/ec2/ec2.env.example -f compose.ec2.yaml config 
 bash -n deploy/ec2/deploy.sh deploy/ec2/backup.sh
 python3 -m unittest discover -s deploy/ec2 -p 'test_*.py'
 ```
+
+## 首次导入本地开发数据
+
+需要将本地 SQLite 的实际编辑内容及图片带到生产时，**先不要运行完整部署脚本或启动 API**。请先执行 [首次数据库迁移文档](initial-database-migration.md)：导出 MySQL SQL 和图片、只启动 db、验证空库后导入，再启动站点。生产初始数据不会自动读取本机 SQLite。
+
+## 访问统计上线配置
+
+Overview 的统计从启用时开始，按 Europe/Madrid 的 IP/日去重，不是历史累计恢复。现有服务器需要在 `.env.ec2` 增加 `VISIT_STATS_ENABLED=true`，然后重新部署 web/API，让 API 启动时创建统计表，并更新 Caddy 的 `header_up X-Alemax-Client-IP {client_ip}` 配置。
+
+官网 web 必须只绑定 127.0.0.1，不能绕过 Caddy 直接访问，否则不能信任该头。若 Cloudflare 开启代理，必须在 Caddy 全局 servers 配置中只信任 Cloudflare 官方当前网段，按官方文档配置可信代理和客户端 IP 头；否则统计的将是 Cloudflare 节点 IP。无法确认代理配置时先保持 `VISIT_STATS_ENABLED=false`，不要使用任意 X-Forwarded-For 或信任全部网段。
+
+可选设置独立的 `VISIT_HASH_SECRET`（至少 32 字符），未设置则使用 INTERNAL_API_KEY。不要在同一天频繁轮换，否则同一访客可能再次计数。日汇总永久保留，IP/日哈希在后续统计请求中清理至只留今日和昨日。上线前核对隐私告知及对应处理依据；哈希属于假名化而非保证匿名。
