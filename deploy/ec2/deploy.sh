@@ -8,7 +8,10 @@ ENV_FILE=${ENV_FILE:-$ROOT/.env.ec2}
 exec 9>"$ROOT/.deploy.lock"
 flock -n 9 || { echo 'Another deployment or backup is running.' >&2; exit 1; }
 DC=(docker compose --env-file "$ENV_FILE" -f "$ROOT/compose.ec2.yaml")
-"${DC[@]}" config --format json | python3 deploy/ec2/validate-env.py
+"${DC[@]}" --profile maintenance config --format json | python3 deploy/ec2/validate-env.py
+source "$ROOT/deploy/ec2/database-client.sh"
+# Fail before rebuilding/recreating applications if CRM MySQL is unavailable.
+mysql_site -N -s -e "SELECT 1" > /dev/null
 # Build first so failed builds leave the current containers running.
 "${DC[@]}" --parallel 1 --progress plain build
 "${DC[@]}" up -d --wait --wait-timeout 240

@@ -1,3 +1,5 @@
+> **生产数据库配置已更新：** 当前官网共用 CRM MySQL 的独立 `alemaxsite` 库。请先按 [共享数据库迁移指南](shared-crm-mysql.md) 操作；下文中独立 `db` 服务、`MYSQL_ROOT_PASSWORD`、`up -d db` 和 `exec db` 命令仅适用于旧版独立数据库部署，不适用于当前生产配置。
+
 # 首次部署：将本地数据库同步到生产 MySQL
 
 本项目本地开发使用 SQLite，EC2 生产使用 MySQL 8.4。不能把 SQLite 的 `.db` 文件复制进 MySQL 数据卷，也不能直接导入 SQLite 的 `.dump`。

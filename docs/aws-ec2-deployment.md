@@ -1,3 +1,5 @@
+> **生产数据库配置已更新：** 当前官网共用 CRM MySQL 的独立 `alemaxsite` 库。请先按 [共享数据库迁移指南](shared-crm-mysql.md) 操作；下文中独立 `db` 服务、`MYSQL_ROOT_PASSWORD`、`up -d db` 和 `exec db` 命令仅适用于旧版独立数据库部署，不适用于当前生产配置。
+
 # ALEMAX 官网：AWS EC2 部署
 
 适用于本仓库 `xwenc/alemax-official-v2`。参考 CRM 附件的 Ubuntu + Docker Compose + Caddy + GitHub OIDC/SSM 架构，已按官网服务及私有 API 调整。本文和模板没有使用 CRM 的 AWS 账号、实例 ID 或部署凭证。仅生成文件，不会自动创建云资源或发布网站。

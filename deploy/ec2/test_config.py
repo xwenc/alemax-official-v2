@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 class ProductionConfigTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        raw = subprocess.check_output(['docker', 'compose', '--env-file', 'deploy/ec2/ec2.env.example', '-f', 'compose.ec2.yaml', 'config', '--format', 'json'], cwd=ROOT)
+        raw = subprocess.check_output(['docker', 'compose', '--env-file', 'deploy/ec2/ec2.env.example', '-f', 'compose.ec2.yaml', '--profile', 'maintenance', 'config', '--format', 'json'], cwd=ROOT)
         cls.config = json.loads(raw)
 
     def valid_config(self):
@@ -19,7 +19,9 @@ class ProductionConfigTests(unittest.TestCase):
         for key in ['ADMIN_PASSWORD', 'ADMIN_SESSION_SECRET', 'INTERNAL_API_KEY']:
             web[key] = 'a' * 64
         web.update(CAPTCHA_SITE_KEY='test-public-key', CAPTCHA_SECRET_KEY='test-private-key', SMTP_HOST='smtp.example.com', SMTP_FROM='sender@example.com')
-        c['services']['db']['environment'].update(MYSQL_PASSWORD='b' * 64, MYSQL_ROOT_PASSWORD='c' * 64)
+        c['services']['db-client']['environment']['MYSQL_PWD'] = 'b' * 64
+        for name in ['api', 'worker']:
+            c['services'][name]['environment']['DATABASE_URL'] = 'mysql+pymysql://alemaxsite:' + 'b' * 64 + '@mysql:3306/alemaxsite?charset=utf8mb4'
         return c
 
     def validate(self, config):
@@ -37,8 +39,25 @@ class ProductionConfigTests(unittest.TestCase):
         self.assertNotIn('a' * 64, r.stdout + r.stderr)
         self.assertEqual(c['name'], 'alemax-official')
         self.assertEqual(c['services']['web']['ports'][0]['host_ip'], '127.0.0.1')
-        for name in ['api', 'db', 'worker']:
+        for name in ['api', 'db-client', 'worker']:
             self.assertFalse(c['services'][name].get('ports'))
+
+    def test_shared_database_is_isolated_and_no_server_is_started(self):
+        c = self.valid_config()
+        self.assertNotIn('db', c['services'])
+        self.assertNotIn('mysql_data', c.get('volumes', {}))
+        self.assertEqual(c['services']['db-client']['profiles'], ['maintenance'])
+        self.assertNotIn('crm_database', c['services']['web']['networks'])
+        c['services']['db-client']['environment']['MYSQL_DATABASE'] = 'crm'
+        self.assertNotEqual(self.validate(c).returncode, 0)
+
+    def test_mismatched_worker_and_missing_external_network_are_rejected(self):
+        c = self.valid_config()
+        c['services']['worker']['environment']['DATABASE_URL'] = 'mysql+pymysql://root:secret@mysql/crm'
+        self.assertNotEqual(self.validate(c).returncode, 0)
+        c = self.valid_config()
+        c['networks']['crm_database']['external'] = False
+        self.assertNotEqual(self.validate(c).returncode, 0)
 
     def test_public_api_or_web_binding_is_rejected(self):
         for name in ['api', 'web']:

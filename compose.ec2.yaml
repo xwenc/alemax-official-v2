@@ -1,34 +1,23 @@
-# Standalone production stack; do not merge with compose.yaml.
+# Production site shares the CRM MySQL server, using a separate database/user.
 name: alemax-official
 services:
-  db:
+  # Maintenance client only: never starts mysqld or runs during normal `up`.
+  db-client:
     image: mysql:8.4
-    restart: unless-stopped
+    profiles: [maintenance]
+    entrypoint: [mysql]
     environment:
-      MYSQL_DATABASE: alemax
-      MYSQL_USER: alemax
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in .env}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
-    volumes:
-    - mysql_data:/var/lib/mysql
-    healthcheck:
-      test:
-      - CMD-SHELL
-      - MYSQL_PWD="$$MYSQL_PASSWORD" mysql -h 127.0.0.1 -u alemax alemax -e "SELECT
-        1"
-      interval: 10s
-      timeout: 5s
-      retries: 20
-    logging:
-      driver: json-file
-      options:
-        max-size: 10m
-        max-file: '3'
+      MYSQL_HOST: ${MYSQL_HOST:-mysql}
+      MYSQL_TCP_PORT: '3306'
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-alemaxsite}
+      MYSQL_USER: ${MYSQL_USER:-alemaxsite}
+      MYSQL_PWD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in .env.ec2}
+    networks: [crm_database]
   api:
     build: ./backend
     restart: unless-stopped
     environment:
-      DATABASE_URL: mysql+pymysql://alemax:${MYSQL_PASSWORD}@db:3306/alemax?charset=utf8mb4
+      DATABASE_URL: mysql+pymysql://${MYSQL_USER:-alemaxsite}:${MYSQL_PASSWORD}@${MYSQL_HOST:-mysql}:3306/${MYSQL_DATABASE:-alemaxsite}?charset=utf8mb4
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:?Set INTERNAL_API_KEY in .env}
       ENVIRONMENT: ${ENVIRONMENT:-production}
       CAPTCHA_SECRET_KEY: ${CAPTCHA_SECRET_KEY:-}
@@ -36,12 +25,10 @@ services:
       DEEPL_API_URL: ${DEEPL_API_URL:-https://api-free.deepl.com/v2/translate}
       DEEPL_GLOSSARY_ID: ${DEEPL_GLOSSARY_ID:-}
       UPLOADS_DIR: /app/uploads
-      CMS_SEED_ON_START: ${CMS_SEED_ON_START:-true}
+      CMS_SEED_ON_START: ${CMS_SEED_ON_START:-false}
     volumes:
     - cms_uploads:/app/uploads
-    depends_on:
-      db:
-        condition: service_healthy
+    networks: [default, crm_database]
     healthcheck:
       test:
       - CMD
@@ -58,6 +45,7 @@ services:
         max-file: '3'
     init: true
   worker:
+    networks: [default, crm_database]
     build: ./backend
     restart: unless-stopped
     command:
@@ -65,7 +53,7 @@ services:
     - -m
     - app.translation
     environment:
-      DATABASE_URL: mysql+pymysql://alemax:${MYSQL_PASSWORD}@db:3306/alemax?charset=utf8mb4
+      DATABASE_URL: mysql+pymysql://${MYSQL_USER:-alemaxsite}:${MYSQL_PASSWORD}@${MYSQL_HOST:-mysql}:3306/${MYSQL_DATABASE:-alemaxsite}?charset=utf8mb4
       INTERNAL_API_KEY: ${INTERNAL_API_KEY}
       DEEPL_API_KEY: ${DEEPL_API_KEY:-}
       DEEPL_API_URL: ${DEEPL_API_URL:-https://api-free.deepl.com/v2/translate}
@@ -121,5 +109,9 @@ services:
       retries: 10
       start_period: 30s
 volumes:
-  mysql_data: null
   cms_uploads: null
+networks:
+  default: {}
+  crm_database:
+    external: true
+    name: ${CRM_MYSQL_NETWORK:-alemax_shared}
