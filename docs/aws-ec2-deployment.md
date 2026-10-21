@@ -199,3 +199,37 @@ Overview 的统计从启用时开始，按 Europe/Madrid 的 IP/日去重，不�
 官网 web 必须只绑定 127.0.0.1，不能绕过 Caddy 直接访问，否则不能信任该头。若 Cloudflare 开启代理，必须在 Caddy 全局 servers 配置中只信任 Cloudflare 官方当前网段，按官方文档配置可信代理和客户端 IP 头；否则统计的将是 Cloudflare 节点 IP。无法确认代理配置时先保持 `VISIT_STATS_ENABLED=false`，不要使用任意 X-Forwarded-For 或信任全部网段。
 
 可选设置独立的 `VISIT_HASH_SECRET`（至少 32 字符），未设置则使用 INTERNAL_API_KEY。不要在同一天频繁轮换，否则同一访客可能再次计数。日汇总永久保留，IP/日哈希在后续统计请求中清理至只留今日和昨日。上线前核对隐私告知及对应处理依据；哈希属于假名化而非保证匿名。
+
+## 前端卡在 Creating an optimized production build
+
+项目的生产构建现已固定为 `next build --webpack`，与本地验证的构建器一致；Docker 构建阶段设置 production 模式并关闭 Next.js telemetry。部署脚本使用 `--parallel 1 --progress plain` 顺序构建并保留完整输出。默认 Turbopack 与已验证的 Webpack 存在构建方式差异，但仅凭一行日志不能确认是构建器故障。
+
+将这些修改同步到服务器后重新部署，不需要清除数据库或 Docker volume。修改了 package.json/Dockerfile 会使相应构建缓存自动失效，无需习惯性使用 `--no-cache`。
+
+若继续长时间无输出，在另一个 SSH 窗口检查：
+
+```bash
+free -h
+df -h
+vmstat 1 10
+sudo journalctl -k --since '20 minutes ago' | grep -Ei 'out of memory|oom|killed process'
+ps -eo pid,ppid,stat,%cpu,%mem,etime,args --sort=-%cpu | head -20
+```
+
+CPU 持续活跃说明仍可能在编译；出现 OOM/Killed 需增加可用内存或规划 swap；vmstat 显示持续高 si/so 则可能在大量换页，单纯继续增加 swap 不一定解决速度问题。t 系列实例还应在 CloudWatch 核对 CPU credit 和实例负载。不要仅依据 20 秒无新日志判断卡死，不要反复启动多个部署或删除部署锁。
+
+### /_global-error 预渲染时报 useContext 为 null
+
+如果日志中编译和 TypeScript 已成功，但最后出现 `Error occurred prerendering page "/_global-error"`、`Cannot read properties of null (reading 'useContext')`，应同时查看开头是否出现 NODE_ENV 警告。
+
+旧 Dockerfile 的 `FROM development AS build` 会继承 `NODE_ENV=development`；仅在后续 runtime 阶段设置 production 不会修正 build 阶段。构建段必须包含：
+
+```dockerfile
+FROM development AS build
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
+RUN npm run build
+```
+
+同时确认 `frontend/package.json` 中为 `"build": "next build --webpack"`。新日志应显示 `(webpack)`，Dockerfile 报错片段应能看到构建前的 production ENV；如果仍显示原来的 `next build` 和没有 ENV 的旧行号，先检查服务器源码是否已同步，再构建，不是只重启旧容器。
+
+大量 meta/head 的 key 警告不是该日志最后终止构建的异常；先修复构建环境，再观察是否仍有独立的渲染错误。不要通过跳过 TypeScript、删除数据库或关闭预渲染校验来掩盖问题。

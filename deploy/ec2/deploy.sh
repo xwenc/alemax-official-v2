@@ -10,7 +10,7 @@ flock -n 9 || { echo 'Another deployment or backup is running.' >&2; exit 1; }
 DC=(docker compose --env-file "$ENV_FILE" -f "$ROOT/compose.ec2.yaml")
 "${DC[@]}" config --format json | python3 deploy/ec2/validate-env.py
 # Build first so failed builds leave the current containers running.
-"${DC[@]}" build
+"${DC[@]}" --parallel 1 --progress plain build
 "${DC[@]}" up -d --wait --wait-timeout 240
 PORT=$("${DC[@]}" port web 3000)
 # Exercise actual CMS-backed pages, not just a responding Node process.
