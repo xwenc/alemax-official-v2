@@ -50,25 +50,35 @@ CMS_SEED_ON_START=false
 
 保留其他官网配置。新的生产配置不再需要 `MYSQL_ROOT_PASSWORD`；旧值已在 `.env.ec2.before-shared` 中备份，供旧栈回滚使用。不要复制 CRM 的应用数据库账号。
 
-## 二、迁移已有生产官网，然后停止旧 MySQL
+## 二、从 backups 数据库备份导入，然后停止旧 MySQL
 
-确认磁盘有足够空间保存数据库和上传文件备份。迁移期间官网短暂停止写入，CRM 继续运行。
+将要恢复的官网 MySQL SQL 文件放在项目的 `backups/` 下，明确传入文件路径，支持 `.sql` 和 `.sql.gz`。脚本不再从旧官网容器导出数据库；旧容器已经删除也可以运行。不会自动挑选“最新”文件。
 
 ```bash
 cd /opt/alemax-official-v2
-sudo bash deploy/ec2/migrate-to-crm-mysql.sh
+sudo bash deploy/ec2/migrate-to-crm-mysql.sh backups/initial-migration-20261019T184131Z/database.mysql.sql
 ```
+
+压缩 SQL 示例（替换为实际文件路径）：
+
+```bash
+sudo bash deploy/ec2/migrate-to-crm-mysql.sh backups/你的备份目录/database.sql.gz
+```
+
+`alemax-initial-migration-*.tar.gz` 是迁移包，不是压缩 SQL，需要先解包，再指定其中的 `database.mysql.sql`。请使用希望恢复的数据时间点：迁移完成后展示的是所选备份的数据，备份之后的修改不会自动同步。
 
 脚本会：
 
-1. 校验配置、确认旧容器属于官网项目、目标是另一个 MySQL 服务器且官网目标库为空。
-2. 构建应用镜像，然后停止官网 web、worker、api，阻止迁移期间写入。
-3. 将旧官网 SQL 和上传文件备份到 `backups/shared-mysql-时间/`，生成校验和。
-4. 将 SQL 导入 CRM 中的 `alemaxsite`，核对源库与目标库每张表的记录数。上传文件继续使用原官网 `cms_uploads` 卷。
-5. 运行部署脚本，等待官网健康检查以及 `/admin`、`/en`、`/es` 检查通过。
-6. 禁用 `alemax-official-db-1` 的自动重启，并停止它。保留旧容器和旧数据卷。
+1. 校验文件位于本项目 backups 目录、格式有效、目标官网库为空。旧容器存在时验证其官网项目标签。
+2. 构建应用镜像，将选定 SQL 固定保存到新的 `backups/shared-mysql-时间/` 目录。有同目录 `SHA256SUMS` 时核验所选 SQL 的校验和。
+3. 停止官网 web、worker、api，并备份当前上传文件，CRM 继续运行。
+4. 导入选定 SQL，检查三个核心表。有同目录 `manifest.json` 时，再核对其中列出的表的记录数；没有清单时无法核对原始记录数。
+5. 运行部署脚本，等待健康检查以及 `/admin`、`/en`、`/es` 检查通过。
+6. 旧官网 MySQL 容器仍存在时，禁用其自动重启并停止它，保留旧数据卷；容器已删除则跳过。
 
-失败时脚本不会删除旧库或清空目标库。查看输出中的备份位置并排查错误；目标导入过数据后再次执行会拒绝覆盖，不能直接重试整个迁移。若仅最后部署失败，修正后运行 `deploy.sh`，验证正常后执行下面的旧容器停止命令。
+图片继续使用现有 `cms_uploads` 卷；此脚本不会从备份包恢复图片。如果上传卷也丢失，应改用首次部署的 `import-initial.sh` 恢复完整迁移包。
+
+失败时不自动清空数据库。导入过数据后不能直接重跑整个迁移脚本；检查迁移记录目录和报错，处理部分导入状态。若仅最后部署失败，修正后运行 `deploy.sh`，验证正常后再停止旧容器。
 
 ```bash
 sudo docker compose --env-file .env.ec2 -f compose.ec2.yaml ps
@@ -76,7 +86,7 @@ sudo docker stats --no-stream
 sudo docker inspect alemax-official-db-1 --format '{{.State.Status}} restart={{.HostConfig.RestartPolicy.Name}}'
 ```
 
-最后一项应为 `exited restart=no`。还需检查官网后台、图片、文章、SEO、翻译，以及 CRM 登录和业务数据。若迁移成功但旧容器停止步骤失败：
+若旧容器仍在，最后一项应为 `exited restart=no`；已删除则 inspect 会提示不存在。还需检查官网后台、图片、文章、SEO、翻译，以及 CRM 登录和业务数据。若迁移成功但旧容器停止步骤失败：
 
 ```bash
 sudo docker update --restart=no alemax-official-db-1
