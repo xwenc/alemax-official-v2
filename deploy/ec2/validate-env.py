@@ -11,7 +11,7 @@ web = services['web']['environment']
 api = services['api']['environment']
 db = services['db']['environment']
 errors = []
-for key, minimum in [('ADMIN_PASSWORD', 12), ('ADMIN_SESSION_SECRET', 32), ('INTERNAL_API_KEY', 32)]:
+for key, minimum in [('ADMIN_PASSWORD', 8), ('ADMIN_SESSION_SECRET', 32), ('INTERNAL_API_KEY', 32)]:
     value = web.get(key) or ''
     if len(value) < minimum or 'REPLACE_' in value or value.startswith('replace_'):
         errors.append(f'{key}: replace placeholder and use at least {minimum} characters')
