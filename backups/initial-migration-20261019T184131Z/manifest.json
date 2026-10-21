@@ -1,0 +1,12 @@
+{
+  "created_at": "2026-10-19T18:41:31.658663+00:00",
+  "target": "MySQL 8.4",
+  "tables": {
+    "cms_content": 88,
+    "cms_translation_jobs": 12,
+    "inquiries": 0
+  },
+  "uploads": {
+    "995ec3889deeb24a1645328c7a39e2e5e435352cd9ee40ba20f9f7cde604aafc.jpg": "995ec3889deeb24a1645328c7a39e2e5e435352cd9ee40ba20f9f7cde604aafc"
+  }
+}
