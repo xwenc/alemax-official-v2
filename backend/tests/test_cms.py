@@ -350,3 +350,30 @@ def test_imported_production_base_placeholder_can_be_saved(client):
     payload['slug'] = 'unsafe-images'
     payload['shared']['images'] = ['/assets/images/../../secret']
     assert client.post('/cms/content', headers=HEADERS, json=payload).status_code == 422
+
+
+def test_translation_accepts_reordered_protected_identifiers(monkeypatch):
+    import json
+    monkeypatch.setattr(settings, 'deepl_api_key', 'test-key')
+    original = httpx.Client
+    def provider(request):
+        assert json.loads(request.content)['text'] == ['<text>Contact <keep>ALEMAX</keep> for <keep>E470a</keep></text>']
+        return httpx.Response(200, json={'translations': [{'text': '<text>Para <keep>E470a</keep>, contacte con <keep>ALEMAX</keep></text>'}]})
+    monkeypatch.setattr(translation.httpx, 'Client', lambda **kwargs: original(transport=httpx.MockTransport(provider), **kwargs))
+    result = translation.translate_fields({'title': 'Contact ALEMAX for E470a'})
+    assert result['title'] == 'Para E470a, contacte con ALEMAX'
+
+
+@pytest.mark.parametrize('translated', [
+    '<text><keep>ALEMAX</keep> <keep>E471</keep></text>',
+    '<text><keep>ALEMAX</keep></text>',
+    '<text><keep>ALEMAX</keep> <keep>E470a</keep> <keep>E470a</keep></text>',
+    '<text><keep>E470a</keep> <keep>E470a</keep></text>',
+])
+def test_translation_still_rejects_changed_missing_or_duplicated_identifiers(monkeypatch, translated):
+    monkeypatch.setattr(settings, 'deepl_api_key', 'test-key')
+    original = httpx.Client
+    monkeypatch.setattr(translation.httpx, 'Client', lambda **kwargs: original(
+        transport=httpx.MockTransport(lambda request: httpx.Response(200, json={'translations': [{'text': translated}]})), **kwargs))
+    with pytest.raises(RuntimeError, match='Protected identifiers changed in title'):
+        translation.translate_fields({'title': 'Contact ALEMAX for E470a'})

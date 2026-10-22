@@ -1,5 +1,6 @@
 """Persistent translation worker: python -m app.translation."""
 import copy
+from collections import Counter
 import html
 import logging
 import re
@@ -83,8 +84,13 @@ def translate_fields(fields):
             for (obj, key), translation in zip(items, translations):
                 before = protect(obj[key])
                 translated = ET.fromstring(translation['text'])
-                if [e.text for e in ET.fromstring(before).iter('keep')] != [e.text for e in translated.iter('keep')]:
-                    raise RuntimeError('Protected identifiers changed. Review source and retry.')
+                # Spanish word order can legitimately move ignored XML spans.
+                # Compare exact values AND occurrence counts, rather than positions.
+                expected = Counter(e.text for e in ET.fromstring(before).iter('keep'))
+                actual = Counter(e.text for e in translated.iter('keep'))
+                if expected != actual:
+                    # Report the field, never identifiers or provider/source text.
+                    raise RuntimeError(f'Protected identifiers changed in {key}. Translation changed, removed or duplicated a protected value. Review source and retry.')
                 obj[key] = ''.join(translated.itertext())
         for ref in refs:
             encoded_size = len(protect(ref[0][ref[1]]).encode('utf-8')) * 2
