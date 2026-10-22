@@ -1,3 +1,4 @@
+import { adminErrorMessage } from "@/lib/admin-errors";
 import type { CmsFields, CmsItem, CmsKind, CmsShared } from "@/lib/cms-types";
 export type ContentLibrary = {
   items: CmsItem[];
@@ -90,9 +91,7 @@ export async function adminRequest<T>(
   const result = await response.json();
   if (!response.ok)
     throw new Error(
-      typeof result.detail === "string"
-        ? result.detail
-        : "Check the fields and try again.",
+      adminErrorMessage(result, response.status),
     );
   return result;
 }

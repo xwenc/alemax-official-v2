@@ -11,7 +11,7 @@ const copyEnEs = {
     ],
     hero: [
       "The right ingredients.\nA world of possibilities.",
-      "Connecting your market\nto manufacturing expertise.",
+      "Manufacturer extension. \nLocal sales support. \nGlobal materials.",
     ],
     heroSub:
       "Your global partner in food additives, ingredients and chemical raw materials.",
@@ -98,7 +98,7 @@ const copyEnEs = {
     ],
     hero: [
       "Los ingredientes adecuados.\nUn mundo de posibilidades.",
-      "Conectamos su mercado\ncon expertos en fabricación.",
+      "Extensión del fabricante. \nSoporte de ventas local. \nMateriales globales.",
     ],
     heroSub:
       "Su socio global en aditivos alimentarios, ingredientes y materias primas químicas.",

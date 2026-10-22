@@ -334,3 +334,19 @@ def test_global_seo_saved_in_database_and_localized_for_all_catalogs(client):
 @pytest.mark.parametrize('suffix', [{}, {'en': 'English'}, {'en': '', 'es': 'Español'}, {'en': '   ', 'es': 'Spanish'}, {'en': 'x' * 201, 'es': 'Spanish'}])
 def test_global_seo_rejects_invalid_suffixes(client, suffix):
     assert client.put('/cms/settings/seo', headers=HEADERS, json={'title_suffix': suffix, 'revision': 0}).status_code == 422
+
+
+def test_imported_production_base_placeholder_can_be_saved(client):
+    payload = {
+        'kind': 'production-base', 'slug': 'factory-emulsifiers-DATEM-PGPR-GMS',
+        'fields': {**FIELDS, 'title': 'Emulsifiers'},
+        'shared': {'images': ['/assets/images/product-default.jpg'] * 19},
+    }
+    response = client.post('/cms/content', headers=HEADERS, json=payload)
+    assert response.status_code == 201, response.text
+    row = response.json()
+    assert row['shared']['images'] == ['/images/product-placeholder.jpg'] * 19
+    assert update(client, row, {**FIELDS, 'title': 'Emulsifiers updated'}).status_code == 200
+    payload['slug'] = 'unsafe-images'
+    payload['shared']['images'] = ['/assets/images/../../secret']
+    assert client.post('/cms/content', headers=HEADERS, json=payload).status_code == 422

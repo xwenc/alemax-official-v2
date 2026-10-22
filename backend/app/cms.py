@@ -129,8 +129,16 @@ class Shared(BaseModel):
     code: str = Field(default='', max_length=200)
     category_slug: str = Field(default='', max_length=191)
     origin_slug: str = Field(default='', max_length=191)
-    images: list[str] = Field(default_factory=list, max_length=12)
+    images: list[str] = Field(default_factory=list, max_length=32)
     sort_order: int = 0
+
+    @field_validator('images', mode='before')
+    @classmethod
+    def legacy_placeholder(cls, images):
+        # Imported catalogs used a placeholder path that was never deployed.
+        if isinstance(images, list):
+            return ['/images/product-placeholder.jpg' if image == '/assets/images/product-default.jpg' else image for image in images]
+        return images
 
     @field_validator('images')
     @classmethod
