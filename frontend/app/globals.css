@@ -378,6 +378,38 @@ nav {
   gap: 45px;
   padding-block: 64px 40px;
 }
+@media (min-width: 768px) {
+  #about > .section-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 350px);
+    align-items: start;
+    gap: 12px 45px;
+  }
+  #about > .section-heading > div {
+    display: contents;
+  }
+  #about > .section-heading .eyebrow {
+    grid-column: 1 / -1;
+    margin-bottom: 0;
+  }
+}
+.products-intro {
+  max-width: 350px;
+}
+.products-intro > p {
+  font-size: 14px;
+  color: #757575;
+}
+.products-intro .text-link {
+  display: inline;
+  margin-top: 0;
+  padding-bottom: 0;
+}
+@media (max-width: 767px) {
+  .products-intro {
+    margin-top: 20px;
+  }
+}
 .section-heading > p {
   max-width: 350px;
   font-size: 14px;

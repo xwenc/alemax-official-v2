@@ -253,11 +253,11 @@ export default function Website({
                 ))}
               </div>
               <div className="hero-caption">
-                <p className="eyebrow">{t.eyebrow}</p>
+                <p className="eyebrow">{t.eyebrow[slide]}</p>
                 <h1>{t.hero[slide]}</h1>
-                <p className="hero-description">{t.heroSub}</p>
-                <a className="button" href="#products">
-                  {t.explore}
+                <p className="hero-description">{t.heroSub[slide]}</p>
+                <a className="button" href={`${home}${t.heroButtons[slide].path}`}>
+                  {t.heroButtons[slide].label}
                   <span>↗</span>
                 </a>
               </div>
@@ -341,14 +341,19 @@ export default function Website({
                     <p className="eyebrow green">{t.productsLabel}</p>
                     <h2>{t.productsTitle}</h2>
                   </div>
-                  <a
-                    href={`${home}/products`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-link"
-                  >
-                    {t.all} ↗
-                  </a>
+                  <div className="products-intro">
+                    <p>
+                      {t.productsText}{" "}
+                      <a
+                        href={`${home}/products`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-link"
+                      >
+                        {t.all} ↗
+                      </a>
+                    </p>
+                  </div>
                 </div>
                 <div className="product-grid">
                   {products.slice(0, 4).map((p) => (
