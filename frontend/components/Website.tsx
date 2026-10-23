@@ -451,10 +451,10 @@ export default function Website({
             <a href={`${home}/activity`}>{t.nav[4]}</a>
             <a href={`${home}/privacy`}>{t.policy}</a>
             <a id="footer-cookie-policy" href={`${home}/cookie`}>
-              {locale === "en" ? "Cookie policy" : "Política de cookies"}
+              {locale === "en" ? "Cookie Policy" : "Política de cookies"}
             </a>
             <a href={`${home}/terms`} target="_blank" rel="noreferrer">
-              {locale === "en" ? "Legal notice" : "Aviso legal"}
+              {locale === "en" ? "Legal Notice" : "Aviso legal"}
             </a>
           </div>
           <div>

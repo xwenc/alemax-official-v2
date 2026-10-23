@@ -2,11 +2,11 @@ export type Locale = "en" | "es";
 const copyEnEs = {
   en: {
     nav: [
-      "Our business",
-      "Production bases",
-      "Products",
-      "About us",
-      "Updates",
+      "Our Solutions",
+      "Manufacturing Network",
+      "Product Portfolio",
+      "About ALEMAX",
+      "Market Insights & Events",
       "Contact",
     ],
     hero: [
@@ -31,7 +31,8 @@ const copyEnEs = {
     aboutCta: "Discover our capabilities",
     basesLabel: "OUR MANUFACTURING NETWORK",
     basesTitle: "Manufacturing Strength. \nDirect from the Source.",
-    basesText: "Explore our network of six specialized production bases in China, delivering consistent quality, competitive sourcing, and reliable supply across key ingredient categories.",
+    basesText:
+      "Explore our network of six specialized production bases in China, delivering consistent quality, competitive sourcing, and reliable supply across key ingredient categories.",
     view: "Explore category",
     brandTitle: "Ingredients that bring\nyour ideas to life.",
     brandText:
@@ -39,7 +40,8 @@ const copyEnEs = {
     brandLabel: "OUR PRODUCT PORTFOLIO",
     productsTitle: "Global sourcing. \nLocal availability.",
     productsLabel: "FEATURED PRODUCTS",
-    productsText: "Discover our selected food ingredients available from Spain local stock, backed by reliable inventory planning, shorter lead times, and flexible supply solutions for your business.",
+    productsText:
+      "Discover our selected food ingredients available from Spain local stock, backed by reliable inventory planning, shorter lead times, and flexible supply solutions for your business.",
     all: "View all products",
     inquire: "Request information",
     updatesLabel: "MARKET INSIGHTS & EVENTS",
@@ -70,7 +72,7 @@ const copyEnEs = {
     ],
     choose: "Select your region",
     privacy: "I have read and agree to the",
-    policy: "Privacy policy",
+    policy: "Privacy Policy",
     send: "Send inquiry",
     sending: "Sending…",
     success: "Your inquiry has been sent to our team. We will be in touch.",
@@ -86,7 +88,8 @@ const copyEnEs = {
     searchPlaceholder: "Search products or production categories…",
     noResults: "No results. Try another ingredient.",
     address: "Madrid, Spain",
-    footer: "Your European gateway to global ingredient sourcing.",
+    footer:
+      "Connecting global manufacturing with ingredient distributors through reliable sourcing and trusted partnerships.",
     close: "Close",
     filter: "All ingredients",
     detail:
@@ -97,11 +100,11 @@ const copyEnEs = {
   },
   es: {
     nav: [
-      "Nuestro negocio",
-      "Bases de producción",
-      "Productos",
-      "Sobre nosotros",
-      "Actualidad",
+      "Nuestras soluciones",
+      "Red de fabricación",
+      "Portafolio de productos",
+      "Acerca de ALEMAX",
+      "Análisis de mercado y eventos",
       "Contacto",
     ],
     hero: [
@@ -138,7 +141,8 @@ const copyEnEs = {
     brandLabel: "NUESTRA CARTERA DE PRODUCTOS",
     productsTitle: "Abastecimiento global. \nDisponibilidad local.",
     productsLabel: "PRODUCTOS DESTACADOS",
-    productsText: "Descubra nuestra selección de ingredientes alimentarios disponibles en stock local en España, con una planificación de inventario fiable, plazos de entrega más cortos y soluciones de suministro flexibles para su negocio.",
+    productsText:
+      "Descubra nuestra selección de ingredientes alimentarios disponibles en stock local en España, con una planificación de inventario fiable, plazos de entrega más cortos y soluciones de suministro flexibles para su negocio.",
     all: "Ver todos los productos",
     inquire: "Solicitar información",
     updatesLabel: "ANÁLISIS DEL MERCADO Y EVENTOS",
