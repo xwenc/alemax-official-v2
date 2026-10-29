@@ -12,6 +12,9 @@ services:
     build:
       context: ./frontend
       target: development
+    # The persistent node_modules volume can outlive dependency changes in the image.
+    # Synchronize from the bind-mounted lockfile before starting Next.js.
+    command: [sh, -c, 'npm ci --no-audit --no-fund && exec npm run dev']
     environment:
       NODE_ENV: development
       ENVIRONMENT: development

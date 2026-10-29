@@ -32,6 +32,7 @@ export const getCatalog = cache(
           slug: i.slug,
           name: i.fields.title,
           code: i.shared.code || "",
+          feature: i.shared.feature === true,
           category:
             categories.find((c) => c.slug === i.shared.category_slug) || null,
           origin: origins.find((o) => o.slug === i.shared.origin_slug) || null,

@@ -6,6 +6,7 @@ export type SiteCategory = {
   fields?: CmsFields;
 };
 export type SiteProduct = {
+  feature?: boolean;
   _id: string;
   name: string;
   slug: string;

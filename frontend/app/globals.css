@@ -1575,3 +1575,19 @@ dialog::backdrop {
 .update-card-copy p { color: #757575; margin-top: 14px; overflow-wrap: anywhere; }
 .update > .article-thumbnail { margin-bottom: 18px; }
 @media (max-width: 600px) { .update-card-copy { padding: 24px; } }
+
+.admin-feature-setting {
+  margin-block: 20px;
+}
+.admin-feature-setting > label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.admin-feature-setting input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--forest);
+}

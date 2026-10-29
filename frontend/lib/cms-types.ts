@@ -14,6 +14,7 @@ export type CmsShared = {
   origin_slug?: string;
   images?: string[];
   sort_order?: number;
+  feature?: boolean;
 };
 export type CmsKind =
   "product" | "category" | "production-base" | "page" | "article";

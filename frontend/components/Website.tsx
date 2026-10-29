@@ -356,7 +356,7 @@ export default function Website({
                   </div>
                 </div>
                 <div className="product-grid">
-                  {products.slice(0, 4).map((p) => (
+                  {products.filter((p) => p.feature === true).map((p) => (
                     <article className="product" key={p.id}>
                       <button
                         className="product-image"

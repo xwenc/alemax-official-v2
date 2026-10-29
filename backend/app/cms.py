@@ -131,6 +131,7 @@ class Shared(BaseModel):
     origin_slug: str = Field(default='', max_length=191)
     images: list[str] = Field(default_factory=list, max_length=32)
     sort_order: int = 0
+    feature: bool = False
 
     @field_validator('images', mode='before')
     @classmethod

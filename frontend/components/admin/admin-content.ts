@@ -18,6 +18,7 @@ export const blankShared = (): CmsShared => ({
   origin_slug: "",
   images: [],
   sort_order: 0,
+  feature: false,
 });
 export const kinds: CmsKind[] = [
   "page",

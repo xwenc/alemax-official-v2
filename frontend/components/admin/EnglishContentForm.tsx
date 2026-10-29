@@ -142,6 +142,25 @@ export default function EnglishContentForm({
           </label>
         </div>
       )}
+      {kind === "product" && (
+        <div className="admin-feature-setting">
+          <label>
+            <input
+              type="checkbox"
+              checked={shared.feature === true}
+              onChange={(e) => {
+                setShared({ ...shared, feature: e.target.checked });
+                setDirty(true);
+              }}
+            />
+            Feature on homepage
+          </label>
+          <p className="admin-hint">
+            Show this product in Featured products. Save the draft and publish
+            each language edition to update the website.
+          </p>
+        </div>
+      )}
       <div className="admin-form-row">
         <label>
           Display order

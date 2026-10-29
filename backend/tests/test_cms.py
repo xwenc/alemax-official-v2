@@ -377,3 +377,27 @@ def test_translation_still_rejects_changed_missing_or_duplicated_identifiers(mon
         transport=httpx.MockTransport(lambda request: httpx.Response(200, json={'translations': [{'text': translated}]})), **kwargs))
     with pytest.raises(RuntimeError, match='Protected identifiers changed in title'):
         translation.translate_fields({'title': 'Contact ALEMAX for E470a'})
+
+
+def test_product_feature_is_persisted_and_only_changes_live_after_publish(client):
+    row = create(client)
+    assert row['shared']['feature'] is False
+    row = mutate(client, row, 'publish', locale='en').json()
+    response = client.put(f"/cms/content/{row['id']}", headers=HEADERS, json={
+        'kind': row['kind'], 'slug': row['slug'], 'revision': row['revision'],
+        'fields': FIELDS, 'shared': {**row['shared'], 'feature': True},
+    })
+    assert response.status_code == 200, response.text
+    row = response.json()
+    assert row['shared']['feature'] is True
+    assert catalog(client, 'en')['items'][0]['shared']['feature'] is False
+    row = mutate(client, row, 'publish', locale='en').json()
+    assert catalog(client, 'en')['items'][0]['shared']['feature'] is True
+    response = client.put(f"/cms/content/{row['id']}", headers=HEADERS, json={
+        'kind': row['kind'], 'slug': row['slug'], 'revision': row['revision'],
+        'fields': FIELDS, 'shared': {**row['shared'], 'feature': False},
+    })
+    row = response.json()
+    assert mutate(client, row, 'publish', locale='en').status_code == 200
+    assert catalog(client, 'en')['items'][0]['shared']['feature'] is False
+    assert len(catalog(client, 'en')['items']) == 1  # Still in the full product catalog.
